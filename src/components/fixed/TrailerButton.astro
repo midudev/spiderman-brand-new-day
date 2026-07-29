@@ -161,6 +161,19 @@ import PlayVideoButton from "@/components/PlayVideoButton.astro"
     right: auto;
     bottom: auto;
   }
+
+  /* En móvil la píldora convive con las redes en la misma fila y no cabe con
+     texto (se salía de pantalla por debajo de ~375px): queda sólo el play. */
+  @media (max-width: 639px) {
+    .trailer-cta--closed .trailer-cta__short {
+      max-width: 0;
+      opacity: 0;
+    }
+
+    .trailer-cta--closed {
+      gap: 0;
+    }
+  }
 </style>
 
 <script>
