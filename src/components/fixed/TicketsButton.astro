@@ -2,14 +2,16 @@
 // Arriba a la derecha: comprar entradas. Un solo enlace con forma de ticket:
 // dos mitades con bocados circulares (corner-shape: scoop). Al hover/active
 // del grupo se separan y rotan un poco (efecto de ticket que se rasga).
-import { PILL } from "@/consts"
+import { PILL, TICKETS_URL } from "@/consts"
 import ArrowRight from "@/assets/icons/arrow-right.svg"
 ---
 
 <a
-  href="#entradas"
+  href={TICKETS_URL}
+  target="_blank"
+  rel="noopener noreferrer"
   class="ticket-group pointer-events-auto group flex items-stretch"
-  aria-label="Entradas"
+  aria-label="Entradas (abre en una pestaña nueva)"
 >
   <span
     class:list={["ticket ticket--left grid size-12 place-items-center", PILL]}

@@ -22,7 +22,10 @@ const redes = [
 					target="_blank"
 					rel="noopener noreferrer"
 					aria-label={`${nombre} (abre en una pestaña nueva)`}
-					class:list={['grid size-12 place-items-center rounded-full', PILL]}
+					class:list={[
+						'social-link grid size-12 place-items-center rounded-full',
+						PILL
+					]}
 				>
 					<Icono class="size-5" aria-hidden="true" />
 				</a>
@@ -30,3 +33,32 @@ const redes = [
 		))
 	}
 </ul>
+
+<style>
+	.social-link {
+		transition:
+			transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+			background-color 0.2s ease;
+	}
+
+	.social-link:hover,
+	.social-link:focus-visible {
+		transform: scale(1.1);
+		background-color: color-mix(
+			in oklab,
+			var(--color-neutral-dark) 80%,
+			transparent
+		);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.social-link {
+			transition: background-color 0.2s ease;
+		}
+
+		.social-link:hover,
+		.social-link:focus-visible {
+			transform: none;
+		}
+	}
+</style>

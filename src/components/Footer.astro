@@ -1,0 +1,49 @@
+---
+import InfoJobs from '@/assets/icons/infojobs.svg';
+import ResponsiveImage from '@/components/ResponsiveImage.astro';
+---
+
+<footer
+	id="partners"
+	class="partners relative grid min-h-screen place-items-center bg-red-dark"
+>
+	<ResponsiveImage
+		base="spiderman-partners"
+		widths={[500, 847]}
+		sizes="(min-width: 768px) 847px, 100vw"
+		width={847}
+		height={800}
+		alt=""
+		pictureClass="pointer-events-none absolute inset-0 block"
+		class="h-full w-full object-contain"
+		data-partners-hero
+	/>
+
+	<p
+		class="relative flex items-center gap-3 font-display text-title-small uppercase tracking-wide text-neutral-white"
+	>
+		Web realizada por
+		<InfoJobs class="h-8 w-auto" role="img" aria-label="InfoJobs" />
+	</p>
+</footer>
+
+<style>
+	.partners {
+		transform-origin: 50% 0%;
+		clip-path: polygon(10% 0%, 90% 0%, 100% 100%, 0% 100%);
+	}
+</style>
+
+<script>
+	import { revealOnScroll } from '@/lib/gsap';
+	import { tiltTrapezoidIn } from '@/lib/tilt';
+
+	tiltTrapezoidIn('#partners');
+
+	revealOnScroll('[data-partners-hero]', {
+		scale: 1.06,
+		autoAlpha: 0,
+		duration: 1,
+		scrollTrigger: { trigger: '#partners' }
+	});
+</script>

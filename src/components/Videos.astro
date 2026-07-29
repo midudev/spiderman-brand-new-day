@@ -1,0 +1,211 @@
+---
+import PlayVideoButton from '@/components/PlayVideoButton.astro';
+import ResponsiveImage from '@/components/ResponsiveImage.astro';
+import { VIDEOS } from '@/data/content';
+---
+
+<section
+	id="videos"
+	class="videos relative mb-[20vh] min-h-screen bg-neutral-black md:mb-[25vh]"
+>
+	<h2 class="sr-only">Vídeos</h2>
+
+	<div class="pin-surface justify-center bg-red-dark">
+		<div class="videos__viewport">
+			<div class="videos__stage">
+				{
+					VIDEOS.map((video, index) => (
+						<figure
+							data-video-card
+							class="videos__card group"
+							style={`--i: ${index}`}
+						>
+							<ResponsiveImage
+								base={video.base}
+								widths={[640, 1280]}
+								sizes="(min-width: 768px) 40rem, 82vw"
+								width={1280}
+								height={720}
+								alt={video.alt}
+								pictureClass="block size-full"
+								class="size-full object-cover"
+							/>
+
+							<span class="videos__play absolute right-3 bottom-3">
+								<PlayVideoButton label={`Reproducir: ${video.title}`} />
+							</span>
+						</figure>
+					))
+				}
+			</div>
+		</div>
+	</div>
+</section>
+
+<style>
+	.videos__viewport {
+		width: 100%;
+		padding-block: clamp(6rem, 12vh, 9rem);
+		perspective: 1400px;
+		perspective-origin: 50% 50%;
+	}
+
+	.videos__stage {
+		position: relative;
+		display: grid;
+		width: 100%;
+		place-items: center;
+		isolation: isolate;
+	}
+
+	.videos__card {
+		position: relative;
+		grid-area: 1 / 1;
+		width: clamp(17rem, 82vw, 40rem);
+		aspect-ratio: 16 / 9;
+		overflow: hidden;
+		background-color: var(--color-neutral-dark);
+		transform-style: preserve-3d;
+		will-change: transform, opacity;
+		box-shadow: 0 18px 40px rgb(0 0 0 / 0.35);
+	}
+
+	.videos__play :global(.play-video-button) {
+		transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+	}
+
+	.videos__play:hover :global(.play-video-button),
+	.videos__play:focus-within :global(.play-video-button) {
+		transform: scale(1.08);
+	}
+
+	@media (min-width: 768px) {
+		.videos__card {
+			width: clamp(28rem, 55vw, 40rem);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.videos__stage {
+			display: flex;
+			flex-direction: column;
+			gap: 1.25rem;
+			padding-inline: 9vw;
+		}
+
+		.videos__card {
+			position: static;
+			grid-area: auto;
+			width: min(100%, 40rem);
+		}
+	}
+</style>
+
+<script>
+	import { gsap, prefersReducedMotion } from '@/lib/gsap';
+	import { $, $$ } from '@/lib/dom';
+	import { createPinnedTiltSection } from '@/lib/tilt';
+
+	const section = $<HTMLElement>('#videos');
+	const surface = section ? $<HTMLElement>('.pin-surface', section) : null;
+	const cards = section ? $$<HTMLElement>('[data-video-card]', section) : [];
+
+	if (section && surface && cards.length && !prefersReducedMotion()) {
+		const PER_CARD = 0.85;
+
+		const stackedPose = (index: number, top: number) => {
+			const depth = top - index;
+			if (depth <= 0) {
+				return { x: 0, y: 0, rotate: 0, scale: 1, autoAlpha: 1 };
+			}
+			const sign = depth % 2 === 1 ? -1 : 1;
+			return {
+				x: sign * (16 + depth * 14),
+				y: depth * 10,
+				rotate: sign * (4 + depth * 2.5),
+				scale: 1 - depth * 0.03,
+				autoAlpha: 1
+			};
+		};
+
+		const incomingPose = () => ({
+			x: 0,
+			y: Math.min(520, window.innerHeight * 0.55),
+			rotate: 6,
+			scale: 0.94,
+			autoAlpha: 0
+		});
+
+		const stackDistance = () =>
+			Math.max(1, (cards.length - 1) * window.innerHeight * PER_CARD);
+
+		createPinnedTiltSection({
+			section,
+			surface,
+			mainDistance: stackDistance,
+			onProgress: (stackProgress) => {
+				const arriving = stackProgress * (cards.length - 1);
+				const fullyStacked = Math.floor(arriving);
+				const frac = arriving - fullyStacked;
+				const nextTop = Math.min(
+					cards.length - 1,
+					fullyStacked + (frac > 0 ? 1 : 0)
+				);
+
+				cards.forEach((card, index) => {
+					const play = card.querySelector<HTMLElement>('.videos__play');
+
+					if (index <= fullyStacked) {
+						const from = stackedPose(index, fullyStacked);
+						const to = stackedPose(index, nextTop);
+						gsap.set(card, {
+							x: gsap.utils.interpolate(from.x, to.x, frac),
+							y: gsap.utils.interpolate(from.y, to.y, frac),
+							rotate: gsap.utils.interpolate(from.rotate, to.rotate, frac),
+							scale: gsap.utils.interpolate(from.scale, to.scale, frac),
+							autoAlpha: 1,
+							zIndex: index + 1
+						});
+						if (play) {
+							gsap.set(play, { autoAlpha: index === nextTop ? 1 : 0 });
+						}
+						return;
+					}
+
+					if (index === fullyStacked + 1) {
+						const incoming = incomingPose();
+						const stacked = stackedPose(index, index);
+						gsap.set(card, {
+							x: gsap.utils.interpolate(incoming.x, stacked.x, frac),
+							y: gsap.utils.interpolate(incoming.y, stacked.y, frac),
+							rotate: gsap.utils.interpolate(
+								incoming.rotate,
+								stacked.rotate,
+								frac
+							),
+							scale: gsap.utils.interpolate(
+								incoming.scale,
+								stacked.scale,
+								frac
+							),
+							autoAlpha: gsap.utils.interpolate(
+								incoming.autoAlpha,
+								stacked.autoAlpha,
+								frac
+							),
+							zIndex: index + 1
+						});
+						if (play) gsap.set(play, { autoAlpha: frac > 0.55 ? 1 : 0 });
+						return;
+					}
+
+					gsap.set(card, { ...incomingPose(), zIndex: index + 1 });
+					if (play) gsap.set(play, { autoAlpha: 0 });
+				});
+			}
+		});
+	} else if (section && surface && cards.length) {
+		gsap.set(surface, { clearProps: 'clipPath,transform' });
+		gsap.set(cards, { clearProps: 'transform,opacity,zIndex' });
+	}
+</script>

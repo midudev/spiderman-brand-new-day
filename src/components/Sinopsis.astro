@@ -1,0 +1,66 @@
+---
+import ResponsiveImage from '@/components/ResponsiveImage.astro'
+import { FICHA, REPARTO, SINOPSIS } from '@/data/content'
+---
+
+<section id="sinopsis" class="min-h-screen bg-neutral-black px-6 pb-32 pt-16 md:px-14 md:pb-40 md:pt-24">
+	<div class="mx-auto grid max-w-6xl gap-12 md:grid-cols-[minmax(0,1fr)_290px] md:gap-24">
+		<div>
+			<h2 data-sinopsis-anim class="font-display text-title-small uppercase text-neutral-white">
+				Spider-Man™: Brand New Day
+			</h2>
+
+			<p data-sinopsis-anim class="mt-8 max-w-2xl font-body text-body-medium text-neutral-white/80">
+				{SINOPSIS}
+			</p>
+
+			<dl data-sinopsis-anim class="mt-16 grid gap-10 sm:grid-cols-2">
+				<div class="space-y-8">
+					{
+						FICHA.map(({ titulo, valor }) => (
+							<div>
+								<dt class="font-display text-title-small uppercase text-neutral-white">{titulo}</dt>
+								<dd class="mt-2 font-body text-body-medium text-neutral-white/80">{valor}</dd>
+							</div>
+						))
+					}
+				</div>
+
+				<div>
+					<dt class="font-display text-title-small uppercase text-neutral-white">Reparto</dt>
+					<dd class="mt-2 max-w-xs font-body text-body-medium text-neutral-white/80">{REPARTO}</dd>
+				</div>
+			</dl>
+		</div>
+
+		<ResponsiveImage
+			base="poster"
+			widths={[290, 580, 870]}
+			sizes="(min-width: 768px) 290px, 100vw"
+			width={1080}
+			height={1350}
+			alt="Cartel de Spider-Man: Brand New Day. Spider-Man salta sobre los rascacielos de Nueva York mientras un grupo de ninjas vestidos de rojo empuña katanas."
+			class="h-auto w-full"
+			data-sinopsis-poster
+		/>
+	</div>
+</section>
+
+<script>
+	import { revealOnScroll } from '@/lib/gsap'
+
+	revealOnScroll('[data-sinopsis-anim]', {
+		y: 40,
+		autoAlpha: 0,
+		duration: 0.8,
+		stagger: 0.12,
+		scrollTrigger: { trigger: '#sinopsis' }
+	})
+
+	revealOnScroll('[data-sinopsis-poster]', {
+		y: 60,
+		autoAlpha: 0,
+		duration: 0.9,
+		scrollTrigger: { trigger: '#sinopsis' }
+	})
+</script>

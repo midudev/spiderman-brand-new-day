@@ -1,0 +1,142 @@
+---
+import { SITE_URL, SEO, TRAILER_YOUTUBE } from '@/consts'
+
+interface Props {
+	title?: string
+	description?: string
+	image?: string
+	imageAlt?: string
+	url?: string
+	type?: 'website' | 'video.movie'
+	noindex?: boolean
+}
+
+const {
+	title = SEO.title,
+	description = SEO.description,
+	image = SEO.image,
+	imageAlt = SEO.imageAlt,
+	url = Astro.url.pathname,
+	type = 'website',
+	noindex = false
+} = Astro.props
+
+const canonical = new URL(url, SITE_URL).href
+const imageUrl = new URL(image, SITE_URL).href
+const trailerWatchUrl = `https://www.youtube.com/watch?v=${TRAILER_YOUTUBE.id}`
+const trailerEmbedUrl = `https://www.youtube-nocookie.com/embed/${TRAILER_YOUTUBE.id}`
+
+const jsonLd = {
+	'@context': 'https://schema.org',
+	'@graph': [
+		{
+			'@type': 'WebSite',
+			'@id': `${SITE_URL}/#website`,
+			url: SITE_URL,
+			name: SEO.siteName,
+			description: SEO.description,
+			inLanguage: 'es-ES',
+			publisher: {
+				'@type': 'Organization',
+				name: SEO.author
+			}
+		},
+		{
+			'@type': 'WebPage',
+			'@id': `${canonical}#webpage`,
+			url: canonical,
+			name: title,
+			description,
+			isPartOf: { '@id': `${SITE_URL}/#website` },
+			primaryImageOfPage: {
+				'@type': 'ImageObject',
+				url: imageUrl,
+				width: SEO.imageWidth,
+				height: SEO.imageHeight
+			},
+			inLanguage: 'es-ES'
+		},
+		{
+			'@type': 'Movie',
+			'@id': `${SITE_URL}/#movie`,
+			name: SEO.movieTitle,
+			alternateName: 'Spider-Man: Un Nuevo Día',
+			description: SEO.description,
+			image: imageUrl,
+			url: SITE_URL,
+			datePublished: SEO.releaseDateISO,
+			inLanguage: 'es',
+			countryOfOrigin: {
+				'@type': 'Country',
+				name: 'United States'
+			},
+			director: {
+				'@type': 'Person',
+				name: SEO.director
+			},
+			actor: SEO.actors.map((name) => ({
+				'@type': 'Person',
+				name
+			})),
+			genre: ['Action', 'Adventure', 'Science Fiction'],
+			productionCompany: {
+				'@type': 'Organization',
+				name: SEO.author
+			},
+			trailer: {
+				'@type': 'VideoObject',
+				name: `${SEO.movieTitle} — Tráiler Oficial`,
+				description: SEO.description,
+				thumbnailUrl: imageUrl,
+				uploadDate: SEO.releaseDateISO,
+				contentUrl: trailerWatchUrl,
+				embedUrl: trailerEmbedUrl,
+				url: trailerWatchUrl
+			}
+		}
+	]
+}
+---
+
+<title>{title}</title>
+<meta name="description" content={description} />
+<meta name="author" content={SEO.author} />
+<meta name="keywords" content={SEO.keywords} />
+<meta name="robots" content={noindex ? 'noindex, nofollow' : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1'} />
+<link rel="canonical" href={canonical} />
+
+{/* Open Graph */}
+<meta property="og:type" content={type} />
+<meta property="og:site_name" content={SEO.siteName} />
+<meta property="og:locale" content="es_ES" />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical} />
+<meta property="og:image" content={imageUrl} />
+<meta property="og:image:secure_url" content={imageUrl} />
+<meta property="og:image:type" content="image/webp" />
+<meta property="og:image:width" content={String(SEO.imageWidth)} />
+<meta property="og:image:height" content={String(SEO.imageHeight)} />
+<meta property="og:image:alt" content={imageAlt} />
+<meta property="og:video" content={trailerEmbedUrl} />
+<meta property="og:video:type" content="text/html" />
+<meta property="og:video:width" content="1280" />
+<meta property="og:video:height" content="720" />
+<meta property="video:release_date" content={SEO.releaseDateISO} />
+<meta property="video:director" content={SEO.director} />
+{SEO.actors.map((actor) => <meta property="video:actor" content={actor} />)}
+
+{/* Twitter / X */}
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={imageUrl} />
+<meta name="twitter:image:alt" content={imageAlt} />
+
+{/* App / PWA hints */}
+<meta name="application-name" content={SEO.siteName} />
+<meta name="apple-mobile-web-app-title" content={SEO.movieTitle} />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+
+<script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />

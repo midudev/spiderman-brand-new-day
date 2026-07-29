@@ -1,0 +1,350 @@
+---
+import Close from '@/assets/icons/close.svg'
+import Plus from '@/assets/icons/plus.svg'
+import ArrowRight from '@/assets/icons/arrow-right.svg'
+import ResponsiveImage from '@/components/ResponsiveImage.astro'
+import { GALLERY_IMAGES } from '@/data/content'
+
+const galleryJson = JSON.stringify(
+	GALLERY_IMAGES.map(({ base, alt }) => ({
+		base,
+		alt,
+		avif: `/images/${base}-1280.avif`,
+		webp: `/images/${base}-1280.webp`
+	}))
+)
+---
+
+<section
+	id="galeria"
+	class="galeria relative mb-[20vh] min-h-screen bg-neutral-black md:mb-[25vh]"
+>
+	<h2 class="sr-only">Galería</h2>
+
+	<div class="pin-surface bg-blue-dark">
+		<div class="galeria__viewport">
+			<div class="galeria__stage">
+				{
+					GALLERY_IMAGES.map((image, index) => (
+						<figure
+							data-galeria-item
+							data-galeria-index={index}
+							class="galeria__card group"
+						>
+							<ResponsiveImage
+								base={image.base}
+								widths={[640, 1280]}
+								sizes="(min-width: 768px) 40vw, 78vw"
+								width={1280}
+								height={683}
+								alt={image.alt}
+								pictureClass="block size-full"
+								class="pointer-events-none size-full object-cover"
+							/>
+
+							<button
+								type="button"
+								data-galeria-open={index}
+								class="absolute inset-0 z-[1] cursor-zoom-in"
+								aria-label={`Ampliar: ${image.alt}`}
+							>
+								<span class="pointer-events-none absolute right-3 bottom-3 grid size-9 place-items-center rounded-full bg-neutral-white text-neutral-black transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.08] group-focus-within:scale-[1.08]">
+									<Plus class="size-3.5" aria-hidden="true" />
+								</span>
+							</button>
+						</figure>
+					))
+				}
+			</div>
+		</div>
+	</div>
+</section>
+
+<dialog
+	data-galeria-lightbox
+	data-images={galleryJson}
+	class="galeria-lightbox m-auto max-h-[100dvh] w-[min(96vw,72rem)] overflow-hidden border-0 bg-transparent p-0"
+	aria-labelledby="galeria-lightbox-title"
+>
+	<div class="relative flex w-full flex-col items-center gap-3 px-12 pt-14 pb-4 md:px-16">
+		<h2 id="galeria-lightbox-title" class="sr-only">Imagen ampliada</h2>
+
+		<button
+			type="button"
+			data-galeria-close
+			class="absolute top-0 right-12 z-[1] grid size-10 place-items-center rounded-full bg-neutral-dark/60 text-neutral-white backdrop-blur-md transition-colors hover:bg-neutral-dark/80 focus-visible:bg-neutral-dark/80 md:right-16"
+			aria-label="Cerrar imagen"
+		>
+			<Close class="size-3.5" aria-hidden="true" />
+		</button>
+
+		<div class="relative w-full">
+			<button
+				type="button"
+				data-galeria-prev
+				class="absolute top-1/2 left-2 z-[1] grid size-10 -translate-y-1/2 place-items-center rounded-full bg-neutral-dark/60 text-neutral-white backdrop-blur-md transition-colors hover:bg-neutral-dark/80 focus-visible:bg-neutral-dark/80 md:left-3"
+				aria-label="Imagen anterior"
+			>
+				<ArrowRight class="size-4 rotate-180" aria-hidden="true" />
+			</button>
+
+			<button
+				type="button"
+				data-galeria-next
+				class="absolute top-1/2 right-2 z-[1] grid size-10 -translate-y-1/2 place-items-center rounded-full bg-neutral-dark/60 text-neutral-white backdrop-blur-md transition-colors hover:bg-neutral-dark/80 focus-visible:bg-neutral-dark/80 md:right-3"
+				aria-label="Imagen siguiente"
+			>
+				<ArrowRight class="size-4" aria-hidden="true" />
+			</button>
+
+			<figure class="galeria-lightbox__frame overflow-hidden bg-neutral-black shadow-[0_24px_64px_rgb(0_0_0_/_0.45)]">
+				<picture>
+					<source data-galeria-source type="image/avif" />
+					<img
+						data-galeria-img
+						src=""
+						alt=""
+						width="1280"
+						height="683"
+						class="block h-auto max-h-[min(72dvh,40rem)] w-full object-contain"
+						decoding="async"
+					/>
+				</picture>
+			</figure>
+		</div>
+
+		<p
+			data-galeria-counter
+			class="font-display text-title-small uppercase tracking-wide text-neutral-white/70"
+			aria-live="polite"
+		>
+		</p>
+	</div>
+</dialog>
+
+<style>
+	.galeria__viewport {
+		width: 100%;
+		overflow: hidden;
+		padding-block: clamp(6rem, 12vh, 9rem);
+		perspective: 1400px;
+		perspective-origin: 50% 50%;
+	}
+
+	.galeria__stage {
+		display: flex;
+		width: max-content;
+		align-items: center;
+		gap: clamp(0.75rem, 2vw, 1.75rem);
+		will-change: transform;
+	}
+
+	.galeria__card {
+		position: relative;
+		width: clamp(18rem, 78vw, 42rem);
+		flex: 0 0 auto;
+		aspect-ratio: 1920 / 1024;
+		overflow: hidden;
+		background-color: var(--color-neutral-dark);
+		transform-style: preserve-3d;
+		will-change: transform, clip-path;
+		clip-path: polygon(0% 0%, 100% 7%, 100% 100%, 0% 93%);
+	}
+
+	@media (min-width: 768px) {
+		.galeria__card {
+			width: clamp(24rem, 40vw, 42rem);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.galeria__viewport {
+			overflow-x: auto;
+			scroll-snap-type: x mandatory;
+		}
+
+		.galeria__stage {
+			padding-inline: 9vw;
+		}
+
+		.galeria__card {
+			scroll-snap-align: center;
+		}
+	}
+
+	.galeria-lightbox {
+		overflow: hidden;
+		scrollbar-width: none;
+	}
+
+	.galeria-lightbox::-webkit-scrollbar {
+		display: none;
+	}
+
+	.galeria-lightbox::backdrop {
+		background-color: rgb(0 0 4 / 0.9);
+		backdrop-filter: blur(8px);
+	}
+</style>
+
+<script>
+	import { gsap, prefersReducedMotion } from '@/lib/gsap'
+	import { $, $$ } from '@/lib/dom'
+	import { createPinnedTiltSection } from '@/lib/tilt'
+
+	type GalleryImage = {
+		base: string
+		alt: string
+		avif: string
+		webp: string
+	}
+
+	const section = $<HTMLElement>('#galeria')
+	const surface = section ? $<HTMLElement>('.pin-surface', section) : null
+	const viewport = section ? $<HTMLElement>('.galeria__viewport', section) : null
+	const track = section ? $<HTMLElement>('.galeria__stage', section) : null
+	const cards = section ? $$<HTMLElement>('[data-galeria-item]', section) : []
+
+	if (section && surface && viewport && track && cards.length && !prefersReducedMotion()) {
+		const CLIP_LEFT = 'polygon(0% 12%, 100% 0%, 100% 100%, 0% 88%)'
+		const CLIP_CENTER = 'polygon(0% 0%, 100% 7%, 100% 100%, 0% 93%)'
+		const CLIP_RIGHT = 'polygon(0% 0%, 100% 12%, 100% 88%, 0% 100%)'
+
+		const cardCenter = (card: HTMLElement) =>
+			card.offsetLeft + card.offsetWidth / 2
+		const viewportCenter = () => viewport.clientWidth / 2
+		const startX = () => viewportCenter() - cardCenter(cards[cards.length - 1])
+		const endX = () => viewportCenter() - cardCenter(cards[0])
+		const travel = () => Math.max(1, Math.abs(endX() - startX()))
+
+		const updateFan = (trackX: number) => {
+			const center = viewportCenter()
+			const step =
+				cards.length > 1
+					? cardCenter(cards[1]) - cardCenter(cards[0])
+					: cards[0].offsetWidth
+
+			cards.forEach((card) => {
+				const offset = cardCenter(card) + trackX - center
+				const position = gsap.utils.clamp(-1, 1, offset / step)
+				const distance = Math.abs(position)
+				const clipPath =
+					position < 0
+						? gsap.utils.interpolate(CLIP_CENTER, CLIP_LEFT, distance)
+						: gsap.utils.interpolate(CLIP_CENTER, CLIP_RIGHT, distance)
+
+				gsap.set(card, {
+					rotateY: -position * 28,
+					rotateX: distance * 2,
+					scale: 1 - distance * 0.06,
+					y: distance * 12,
+					clipPath,
+					transformOrigin:
+						position < -0.05
+							? '100% 50%'
+							: position > 0.05
+								? '0% 50%'
+								: '50% 50%',
+					zIndex: Math.round(10 - distance * 9)
+				})
+			})
+		}
+
+		createPinnedTiltSection({
+			section,
+			surface,
+			mainDistance: travel,
+			onProgress: (slideProgress) => {
+				const x = gsap.utils.interpolate(startX(), endX(), slideProgress)
+				gsap.set(track, { x })
+				updateFan(x)
+			}
+		})
+	} else if (section && surface && track && cards.length) {
+		gsap.set(surface, { clearProps: 'clipPath,transform' })
+		gsap.set(track, { clearProps: 'transform' })
+		gsap.set(cards, { clearProps: 'transform,zIndex,clipPath' })
+	}
+
+	// ——— Lightbox ———
+	const lightbox = $<HTMLDialogElement>('[data-galeria-lightbox]')
+	const img = lightbox ? $<HTMLImageElement>('[data-galeria-img]', lightbox) : null
+	const source = lightbox ? $<HTMLSourceElement>('[data-galeria-source]', lightbox) : null
+	const counter = lightbox ? $<HTMLElement>('[data-galeria-counter]', lightbox) : null
+	const closeBtn = lightbox ? $<HTMLButtonElement>('[data-galeria-close]', lightbox) : null
+	const prevBtn = lightbox ? $<HTMLButtonElement>('[data-galeria-prev]', lightbox) : null
+	const nextBtn = lightbox ? $<HTMLButtonElement>('[data-galeria-next]', lightbox) : null
+
+	const images = (() => {
+		try {
+			return JSON.parse(lightbox?.dataset.images ?? '[]') as GalleryImage[]
+		} catch {
+			return [] as GalleryImage[]
+		}
+	})()
+
+	if (lightbox && img && source && counter && images.length) {
+		let index = 0
+
+		const blockBackgroundScroll = (event: Event) => {
+			event.preventDefault()
+		}
+
+		const show = (next: number) => {
+			index = (next + images.length) % images.length
+			const item = images[index]
+			source.srcset = item.avif
+			img.src = item.webp
+			img.alt = item.alt
+			counter.textContent = `${index + 1} / ${images.length}`
+		}
+
+		const open = (next: number) => {
+			show(next)
+			if (!lightbox.open) lightbox.showModal()
+			// Bloquear rueda/touch del fondo sin tocar overflow del body
+			// (eso reseteaba el scroll con los pins de GSAP).
+			document.addEventListener('wheel', blockBackgroundScroll, {
+				passive: false
+			})
+			document.addEventListener('touchmove', blockBackgroundScroll, {
+				passive: false
+			})
+		}
+
+		const close = () => {
+			if (lightbox.open) lightbox.close()
+		}
+
+		for (const trigger of $$<HTMLButtonElement>('[data-galeria-open]')) {
+			trigger.addEventListener('click', () => {
+				const i = Number(trigger.dataset.galeriaOpen)
+				if (Number.isFinite(i)) open(i)
+			})
+		}
+
+		closeBtn?.addEventListener('click', close)
+		prevBtn?.addEventListener('click', () => show(index - 1))
+		nextBtn?.addEventListener('click', () => show(index + 1))
+
+		lightbox.addEventListener('click', (event) => {
+			if (event.target === lightbox) close()
+		})
+
+		lightbox.addEventListener('close', () => {
+			document.removeEventListener('wheel', blockBackgroundScroll)
+			document.removeEventListener('touchmove', blockBackgroundScroll)
+		})
+
+		document.addEventListener('keydown', (event) => {
+			if (!lightbox.open) return
+			if (event.key === 'ArrowLeft') {
+				event.preventDefault()
+				show(index - 1)
+			} else if (event.key === 'ArrowRight') {
+				event.preventDefault()
+				show(index + 1)
+			}
+		})
+	}
+</script>

@@ -1,5 +1,8 @@
 export const SITE_URL = 'https://www.spidermanbrandnewday.es';
 
+/** Compra de entradas (Sony Pictures España). */
+export const TICKETS_URL = 'https://sonypictures.es/pelicula/spiderman-brand-new-day';
+
 /** Tráiler oficial en YouTube (embed nocookie). */
 export const TRAILER_YOUTUBE = {
 	id: 'owfWVJoxXR4',

@@ -1,0 +1,115 @@
+@import "tailwindcss";
+
+/* Anton — display / titles */
+@font-face {
+  font-family: "Anton";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/anton-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Inter — body (variable, 100–900) */
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/inter-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@theme {
+  --font-display: "Anton", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-sans: "Inter", sans-serif;
+
+  --text-title-small: 20px;
+  --text-title-small--line-height: 1;
+
+  --text-body-medium: 14px;
+  --text-body-medium--line-height: 1.5;
+  --text-body-small: 8px;
+  --text-body-small--line-height: 1;
+
+  --color-neutral-white: #f7f9fb;
+  --color-neutral-black: #000004;
+  --color-neutral-dark: #353838;
+  --color-neutral-light: #8aa5ad;
+
+  --color-red-light: #d12027;
+  --color-red-dark: #8d191b;
+
+  --color-blue-dark: #081d62;
+}
+
+@layer base {
+	html {
+		margin: 0;
+		width: 100%;
+		min-height: 100%;
+		background-color: var(--color-neutral-black);
+		color: var(--color-neutral-white);
+		color-scheme: dark;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+		/* `clip` corta overflow sin romper sticky (a diferencia de `hidden`). */
+		overflow-x: clip;
+		scrollbar-width: thin;
+		scrollbar-color: var(--color-red-light) var(--color-blue-dark);
+	}
+
+	html::-webkit-scrollbar {
+		width: 10px;
+	}
+
+	html::-webkit-scrollbar-track {
+		background: var(--color-blue-dark);
+	}
+
+	html::-webkit-scrollbar-thumb {
+		background: linear-gradient(
+			180deg,
+			var(--color-red-light) 0%,
+			var(--color-red-dark) 100%
+		);
+		border-radius: 999px;
+		border: 2px solid var(--color-blue-dark);
+	}
+
+	html::-webkit-scrollbar-thumb:hover {
+		background: var(--color-red-light);
+	}
+
+	body {
+		margin: 0;
+		width: 100%;
+		min-height: 100%;
+	}
+
+	/* Anton solo existe a 400: forzar peso y bloquear faux-bold. */
+	.font-display {
+		font-weight: 400;
+		font-synthesis-weight: none;
+	}
+}
+
+@layer components {
+	/* Superficie pinneada compartida por Galería y Vídeos. */
+	.pin-surface {
+		display: flex;
+		min-height: 100vh;
+		align-items: center;
+		overflow: hidden;
+		transform-origin: 50% 0%;
+		clip-path: polygon(10% 0%, 90% 0%, 100% 100%, 0% 100%);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.pin-surface {
+			clip-path: none;
+			transform: none;
+		}
+	}
+}

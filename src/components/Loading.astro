@@ -1,0 +1,110 @@
+---
+
+---
+
+<div
+  id="loading"
+  class="fixed inset-0 z-50 overflow-hidden bg-red-light"
+  role="status"
+  aria-live="polite"
+  aria-label="Cargando..."
+>
+  <video
+    data-loading-video
+    class="absolute inset-0 h-full w-full object-cover"
+    autoplay
+    muted
+    playsinline
+    preload="auto"
+    aria-hidden="true"
+  >
+    <source src="/videos/spiderman-loading.webm" type="video/webm" />
+    <source src="/videos/spiderman-loading.mp4" type="video/mp4" />
+  </video>
+
+  <div class="pointer-events-none absolute inset-0 grid place-items-center">
+    <div data-loading-spider class="spider" aria-hidden="true">
+      <span class="spider__fill"></span>
+    </div>
+  </div>
+
+  <div
+    class="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between px-8 pb-8 font-display uppercase text-neutral-white text-9xl"
+  >
+    <span>CARGANDO...</span>
+    <span data-loading-percent>0%</span>
+  </div>
+</div>
+
+<style>
+  .spider {
+    --progress: 0; /* custom property que usaremos para controlar el fill */
+    width: 55px;
+    height: 89px;
+    mask: url(/images/spider.svg) no-repeat center / contain;
+    background-color: --alpha(var(--color-neutral-white) / 25%);
+  }
+
+  .spider__fill {
+    display: block;
+    height: 100%;
+    background-color: var(--color-neutral-white);
+    transform: scaleY(var(--progress));
+    transform-origin: bottom;
+  }
+</style>
+
+<script>
+  import { $ } from "@/lib/dom"
+  import { gsap, prefersReducedMotion } from "@/lib/gsap"
+  import { markLoadingDone, markLoadingReady } from "@/lib/loading"
+
+  const $overlay = $("#loading")
+  const $video = $("[data-loading-video]") as HTMLVideoElement | null
+  const $percent = $("[data-loading-percent]")
+  const $spider = $("[data-loading-spider]")
+
+  if ($overlay && $video && $percent && $spider) {
+    document.body.classList.add("overflow-hidden")
+
+    const finish = () => {
+      document.body.classList.remove("overflow-hidden")
+      $overlay.remove()
+      markLoadingDone()
+    }
+
+    const setProgress = (value: number) => {
+      $percent.textContent = `${Math.round(value)}%`
+      $spider.style.setProperty("--progress", String(value / 100))
+    }
+
+    if (prefersReducedMotion()) {
+      setProgress(100)
+      finish()
+    } else {
+      $video.play().catch((error) => {
+        console.error(error)
+      })
+
+      const counter = { value: 0 }
+
+      gsap
+        .timeline({ onComplete: finish })
+        .to(counter, {
+          value: 100,
+          duration: 1.2,
+          ease: "none",
+          onUpdate: () => {
+            setProgress(counter.value)
+          },
+          onComplete: markLoadingReady,
+        })
+        .to($overlay, {
+          yPercent: -115,
+          rotation: -7,
+          duration: 0.6,
+          ease: "power3.in",
+        })
+    }
+  }
+</script>

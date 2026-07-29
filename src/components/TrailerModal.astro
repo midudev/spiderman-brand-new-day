@@ -32,6 +32,15 @@ const embedSrc = `https://www.youtube-nocookie.com/embed/${TRAILER_YOUTUBE.id}?a
 </dialog>
 
 <style>
+	.trailer-modal {
+		overflow: hidden;
+		scrollbar-width: none;
+	}
+
+	.trailer-modal::-webkit-scrollbar {
+		display: none;
+	}
+
 	.trailer-modal::backdrop {
 		background-color: rgb(0 0 4 / 0.86);
 		backdrop-filter: blur(6px);
@@ -74,9 +83,19 @@ const embedSrc = `https://www.youtube-nocookie.com/embed/${TRAILER_YOUTUBE.id}?a
 			frame.replaceChildren();
 		};
 
+		const blockBackgroundScroll = (event: Event) => {
+			event.preventDefault();
+		};
+
 		const open = () => {
 			mount();
 			if (!modal.open) modal.showModal();
+			document.addEventListener('wheel', blockBackgroundScroll, {
+				passive: false
+			});
+			document.addEventListener('touchmove', blockBackgroundScroll, {
+				passive: false
+			});
 		};
 
 		const close = () => {
@@ -98,6 +117,10 @@ const embedSrc = `https://www.youtube-nocookie.com/embed/${TRAILER_YOUTUBE.id}?a
 			if (event.target === modal) close();
 		});
 
-		modal.addEventListener('close', unmount);
+		modal.addEventListener('close', () => {
+			unmount();
+			document.removeEventListener('wheel', blockBackgroundScroll);
+			document.removeEventListener('touchmove', blockBackgroundScroll);
+		});
 	}
 </script>

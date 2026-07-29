@@ -45,7 +45,7 @@ const initial = SECTIONS[0].label;
 	<nav id="menu-panel" data-menu-panel hidden aria-label="Secciones" class="menu-panel">
 		<ul
 			class:list={[
-				'flex w-[220px] flex-col gap-3 py-6 pl-8 pr-6 font-display text-2xl uppercase text-neutral-white',
+				'flex w-[220px] flex-col px-4 font-display text-title-small uppercase tracking-wide text-neutral-white',
 				PILL
 			]}
 		>
@@ -55,7 +55,7 @@ const initial = SECTIONS[0].label;
 						<a
 							href={`#${section.id}`}
 							data-menu-link={section.id}
-							class="flex items-center gap-2 transition-opacity hover:opacity-70"
+							class="flex h-12 items-center gap-[5px] transition-opacity hover:opacity-70"
 						>
 							<span
 								class="size-1.5 shrink-0 rounded-full bg-current opacity-0 data-current:opacity-100"
