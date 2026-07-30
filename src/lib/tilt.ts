@@ -82,6 +82,8 @@ type PinnedTiltOptions = {
 	mainDistance: () => number;
 	/** Progress 0–1 de la animación principal (carrusel / mazo). */
 	onProgress: (progress: number) => void;
+	/** Factor 0–1 de lerp por frame (a 60 fps). Por defecto 0.12; con 0, render 1:1 con el scroll. */
+	smooth?: number;
 };
 
 /** Pin + tilt de salida compartido por Galería y Vídeos. */
@@ -89,7 +91,8 @@ export function createPinnedTiltSection({
 	section,
 	surface,
 	mainDistance,
-	onProgress
+	onProgress,
+	smooth = 0.12
 }: PinnedTiltOptions) {
 	const exitDistance = () => window.innerHeight * EXIT_SCROLL;
 	const totalDistance = () => mainDistance() + exitDistance();
@@ -114,6 +117,37 @@ export function createPinnedTiltSection({
 
 	tiltSurfaceIn(section, surface);
 
+	let current = 0;
+	let target = 0;
+	let ticking = false;
+
+	const stopTicker = () => {
+		gsap.ticker.remove(tick);
+		ticking = false;
+	};
+
+	function tick() {
+		const factor = 1 - Math.pow(1 - (smooth ?? 1), gsap.ticker.deltaRatio());
+		current += (target - current) * factor;
+		if (Math.abs(target - current) < 0.0005) {
+			current = target;
+			stopTicker();
+		}
+		render(current);
+	}
+
+	const update = (progress: number) => {
+		if (!smooth) {
+			render(progress);
+			return;
+		}
+		target = progress;
+		if (!ticking) {
+			ticking = true;
+			gsap.ticker.add(tick);
+		}
+	};
+
 	ScrollTrigger.create({
 		trigger: section,
 		start: 'top top',
@@ -121,8 +155,13 @@ export function createPinnedTiltSection({
 		pin: section,
 		anticipatePin: 1,
 		invalidateOnRefresh: true,
-		onRefresh: (self) => render(self.progress),
-		onUpdate: (self) => render(self.progress)
+		onRefresh: (self) => {
+			// Sin lerp en refresh: evita drift al redimensionar.
+			current = target = self.progress;
+			if (ticking) stopTicker();
+			render(self.progress);
+		},
+		onUpdate: (self) => update(self.progress)
 	});
 
 	render(0);
