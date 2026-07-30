@@ -166,6 +166,8 @@ Aquí tienes una guía rápida:
 6. Haz push a la rama (`git push origin feature/CaracteristicaIncreible`)
 7. Abre una [_pull request_](https://github.com/midudev/spiderman-brand-new-day/pulls)
 
+Consulta la [guía de contribución](CONTRIBUTING.md) para empezar de la mejor manera, incluidas las [convenciones del proyecto](CONTRIBUTING.md#convenciones-del-proyecto-) y las [buenas prácticas](CONTRIBUTING.md#buenas-prácticas-).
+
 ### Contribuir desde Stackblitz
 
 Si quieres contribuir de una manera más sencilla, puedes iniciar este proyecto desde _Stackblitz_ usando tu cuenta de GitHub:
