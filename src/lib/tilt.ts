@@ -14,6 +14,8 @@ export const ANGLE_IN = 16;
 export const ANGLE_OUT = 14;
 /** Fracción de viewport usada al final del pin para el tilt de salida. */
 export const EXIT_SCROLL = 0.3;
+/** Factor de lerp por frame (a 60 fps) del progreso del pin. */
+const SMOOTH = 0.12;
 
 function flat(el: Element) {
 	gsap.set(el, { clipPath: FLAT, rotateX: 0, clearProps: 'transform' });
@@ -82,8 +84,6 @@ type PinnedTiltOptions = {
 	mainDistance: () => number;
 	/** Progress 0–1 de la animación principal (carrusel / mazo). */
 	onProgress: (progress: number) => void;
-	/** Factor 0–1 de lerp por frame (a 60 fps). Por defecto 0.12; con 0, render 1:1 con el scroll. */
-	smooth?: number;
 };
 
 /** Pin + tilt de salida compartido por Galería y Vídeos. */
@@ -91,8 +91,7 @@ export function createPinnedTiltSection({
 	section,
 	surface,
 	mainDistance,
-	onProgress,
-	smooth = 0.12
+	onProgress
 }: PinnedTiltOptions) {
 	const exitDistance = () => window.innerHeight * EXIT_SCROLL;
 	const totalDistance = () => mainDistance() + exitDistance();
@@ -127,7 +126,7 @@ export function createPinnedTiltSection({
 	};
 
 	function tick() {
-		const factor = 1 - Math.pow(1 - (smooth ?? 1), gsap.ticker.deltaRatio());
+		const factor = 1 - Math.pow(1 - SMOOTH, gsap.ticker.deltaRatio());
 		current += (target - current) * factor;
 		if (Math.abs(target - current) < 0.0005) {
 			current = target;
@@ -137,10 +136,6 @@ export function createPinnedTiltSection({
 	}
 
 	const update = (progress: number) => {
-		if (!smooth) {
-			render(progress);
-			return;
-		}
 		target = progress;
 		if (!ticking) {
 			ticking = true;
