@@ -2,189 +2,200 @@
 // Arriba a la izquierda: un solo botón (icono + sección actual). Al abrirlo,
 // la etiqueta deja paso al panel con el índice de secciones. La página de detrás
 // no se toca: ni velo, ni desenfoque, ni cambio de opacidad.
-import { SECTIONS, PILL } from '@/consts';
-import Menu from '@/assets/icons/menu.svg';
-import Close from '@/assets/icons/close.svg';
+import { SECTIONS, PILL } from "@/consts";
+import Menu from "@/assets/icons/menu.svg";
+import Close from "@/assets/icons/close.svg";
 
 const initial = SECTIONS[0].label;
 ---
 
 <div data-menu class="pointer-events-auto relative">
-	<button
-		type="button"
-		data-menu-toggle
-		aria-label="Abrir menú"
-		aria-expanded="false"
-		aria-controls="menu-panel"
-		class="menu-toggle flex items-stretch gap-[2px]"
-	>
-		<span
-			data-menu-part
-			class:list={['grid size-12 shrink-0 place-items-center rounded-full', PILL]}
-		>
-			<Menu class="w-[18px]" data-menu-icon="open" aria-hidden="true" />
-			<Close class="hidden w-3.5" data-menu-icon="close" aria-hidden="true" />
-		</span>
+  <button
+    type="button"
+    data-menu-toggle
+    aria-label="Abrir menú"
+    aria-expanded="false"
+    aria-controls="menu-panel"
+    class="menu-toggle flex items-stretch gap-[2px] cursor-pointer"
+  >
+    <span
+      data-menu-part
+      class:list={[
+        "grid size-12 shrink-0 place-items-center rounded-full",
+        PILL,
+      ]}
+    >
+      <Menu class="w-[18px]" data-menu-icon="open" aria-hidden="true" />
+      <Close class="hidden w-3.5" data-menu-icon="close" aria-hidden="true" />
+    </span>
 
-		<!-- Ancho fijo: si la píldora creciera con cada nombre de sección, el resto de
+    <!-- Ancho fijo: si la píldora creciera con cada nombre de sección, el resto de
 		     la fila se movería en cada scroll. 122px = la etiqueta más ancha
 		     («Partners», 121px medidos con la fuente ya cargada). -->
-		<span
-			data-menu-part
-			data-menu-current
-			class:list={[
-				'hidden h-12 w-[122px] items-center gap-[5px] px-4 font-display text-title-small uppercase tracking-wide sm:flex',
-				PILL
-			]}
-		>
-			<span class="size-1.5 shrink-0 rounded-full bg-current" aria-hidden="true"></span>
-			<span data-current-section aria-live="polite">{initial}</span>
-		</span>
-	</button>
+    <span
+      data-menu-part
+      data-menu-current
+      class:list={[
+        "hidden h-12 w-[122px] items-center gap-[5px] px-4 font-display text-title-small uppercase tracking-wide sm:flex",
+        PILL,
+      ]}
+    >
+      <span class="size-1.5 shrink-0 rounded-full bg-current" aria-hidden="true"
+      ></span>
+      <span data-current-section aria-live="polite">{initial}</span>
+    </span>
+  </button>
 
-	<nav id="menu-panel" data-menu-panel hidden aria-label="Secciones" class="menu-panel">
-		<ul
-			class:list={[
-				'flex w-[220px] flex-col px-4 font-display text-title-small uppercase tracking-wide text-neutral-white',
-				PILL
-			]}
-		>
-			{
-				SECTIONS.map((section) => (
-					<li>
-						<a
-							href={`#${section.id}`}
-							data-menu-link={section.id}
-							class="flex h-12 items-center gap-[5px] transition-opacity hover:opacity-70"
-						>
-							<span
-								class="size-1.5 shrink-0 rounded-full bg-current opacity-0 data-current:opacity-100"
-								aria-hidden="true"
-							/>
-							{section.label}
-						</a>
-					</li>
-				))
-			}
-		</ul>
-	</nav>
+  <nav
+    id="menu-panel"
+    data-menu-panel
+    hidden
+    aria-label="Secciones"
+    class="menu-panel"
+  >
+    <ul
+      class:list={[
+        "flex w-[220px] flex-col px-4 font-display text-title-small uppercase tracking-wide text-neutral-white",
+        PILL,
+      ]}
+    >
+      {
+        SECTIONS.map((section) => (
+          <li>
+            <a
+              href={`#${section.id}`}
+              data-menu-link={section.id}
+              class="flex h-12 items-center gap-[5px] transition-opacity hover:opacity-70"
+            >
+              <span
+                class="size-1.5 shrink-0 rounded-full bg-current opacity-0 data-current:opacity-100"
+                aria-hidden="true"
+              />
+              {section.label}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </nav>
 </div>
 
 <style>
-	/* Hover/focus del botón entero: oscurece icono y etiqueta a la vez. */
-	.menu-toggle:hover [data-menu-part],
-	.menu-toggle:focus-visible [data-menu-part] {
-		background-color: color-mix(
-			in oklab,
-			var(--color-neutral-dark) 80%,
-			transparent
-		);
-	}
+  /* Hover/focus del botón entero: oscurece icono y etiqueta a la vez. */
+  .menu-toggle:hover [data-menu-part],
+  .menu-toggle:focus-visible [data-menu-part] {
+    background-color: color-mix(
+      in oklab,
+      var(--color-neutral-dark) 80%,
+      transparent
+    );
+  }
 
-	/* Al lado del botón (no debajo): el panel sustituye a la píldora de sección. */
-	.menu-panel {
-		position: absolute;
-		top: 0;
-		left: calc(3rem + 2px);
-		animation: menu-panel-in 0.25s cubic-bezier(0.22, 1, 0.36, 1);
-	}
+  /* Al lado del botón (no debajo): el panel sustituye a la píldora de sección. */
+  .menu-panel {
+    position: absolute;
+    top: 0;
+    left: calc(3rem + 2px);
+    animation: menu-panel-in 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  }
 
-	@keyframes menu-panel-in {
-		from {
-			opacity: 0;
-			translate: -8px 0;
-		}
-	}
+  @keyframes menu-panel-in {
+    from {
+      opacity: 0;
+      translate: -8px 0;
+    }
+  }
 
-	@media (prefers-reduced-motion: reduce) {
-		.menu-panel {
-			animation: none;
-		}
-	}
+  @media (prefers-reduced-motion: reduce) {
+    .menu-panel {
+      animation: none;
+    }
+  }
 </style>
 
 <script>
-	import { ScrollTrigger } from '@/lib/gsap';
-	import { SECTIONS } from '@/consts';
-	import { $, $$ } from '@/lib/dom';
+  import { ScrollTrigger } from "@/lib/gsap";
+  import { SECTIONS } from "@/consts";
+  import { $, $$ } from "@/lib/dom";
 
-	const label = $('[data-current-section]');
-	const menu = $('[data-menu]');
-	const toggle = $<HTMLButtonElement>('[data-menu-toggle]');
-	const panel = $('[data-menu-panel]');
-	const current = $('[data-menu-current]');
-	const iconOpen = $('[data-menu-icon="open"]');
-	const iconClose = $('[data-menu-icon="close"]');
+  const label = $("[data-current-section]");
+  const menu = $("[data-menu]");
+  const toggle = $<HTMLButtonElement>("[data-menu-toggle]");
+  const panel = $("[data-menu-panel]");
+  const current = $("[data-menu-current]");
+  const iconOpen = $('[data-menu-icon="open"]');
+  const iconClose = $('[data-menu-icon="close"]');
 
-	// ——— Indicador de sección (label + punto activo en el panel) ———
-	let currentId = SECTIONS[0].id;
+  // ——— Indicador de sección (label + punto activo en el panel) ———
+  let currentId = SECTIONS[0].id;
 
-	/** Marca el link del menú cuya `data-menu-link` coincide con `id`. */
-	const markCurrent = (id: string) => {
-		currentId = id;
-		for (const link of $$('[data-menu-link]')) {
-			const dot = link.firstElementChild;
-			if (link.dataset.menuLink === id) dot?.setAttribute('data-current', '');
-			else dot?.removeAttribute('data-current');
-		}
-	};
+  /** Marca el link del menú cuya `data-menu-link` coincide con `id`. */
+  const markCurrent = (id: string) => {
+    currentId = id;
+    for (const link of $$("[data-menu-link]")) {
+      const dot = link.firstElementChild;
+      if (link.dataset.menuLink === id) dot?.setAttribute("data-current", "");
+      else dot?.removeAttribute("data-current");
+    }
+  };
 
-	if (label) {
-		for (const section of SECTIONS) {
-			const el = $(`#${section.id}`);
-			if (!el) continue;
+  if (label) {
+    for (const section of SECTIONS) {
+      const el = $(`#${section.id}`);
+      if (!el) continue;
 
-			const activate = () => {
-				if (label.textContent !== section.label) label.textContent = section.label;
-				markCurrent(section.id);
-			};
+      const activate = () => {
+        if (label.textContent !== section.label)
+          label.textContent = section.label;
+        markCurrent(section.id);
+      };
 
-			// Activa la sección cuando su centro vertical cruza el centro del viewport.
-			ScrollTrigger.create({
-				trigger: el,
-				start: 'top 50%',
-				end: 'bottom 50%',
-				onEnter: activate,
-				onEnterBack: activate
-			});
-		}
-	}
+      // Activa la sección cuando su centro vertical cruza el centro del viewport.
+      ScrollTrigger.create({
+        trigger: el,
+        start: "top 50%",
+        end: "bottom 50%",
+        onEnter: activate,
+        onEnterBack: activate,
+      });
+    }
+  }
 
-	markCurrent(currentId);
+  markCurrent(currentId);
 
-	// ——— Apertura / cierre del panel ———
-	if (menu && toggle && panel && current && iconOpen && iconClose) {
-		let open = false;
+  // ——— Apertura / cierre del panel ———
+  if (menu && toggle && panel && current && iconOpen && iconClose) {
+    let open = false;
 
-		const setOpen = (next: boolean) => {
-			open = next;
-			toggle.setAttribute('aria-expanded', String(open));
-			toggle.setAttribute('aria-label', open ? 'Cerrar menú' : 'Abrir menú');
-			panel.hidden = !open;
-			// La píldora lleva `flex`, que gana al `display: none` del atributo
-			// `hidden`, así que aquí hace falta apagarla por estilo.
-			current.hidden = open;
-			current.style.display = open ? 'none' : '';
-			iconOpen.classList.toggle('hidden', open);
-			iconClose.classList.toggle('hidden', !open);
-		};
+    const setOpen = (next: boolean) => {
+      open = next;
+      toggle.setAttribute("aria-expanded", String(open));
+      toggle.setAttribute("aria-label", open ? "Cerrar menú" : "Abrir menú");
+      panel.hidden = !open;
+      // La píldora lleva `flex`, que gana al `display: none` del atributo
+      // `hidden`, así que aquí hace falta apagarla por estilo.
+      current.hidden = open;
+      current.style.display = open ? "none" : "";
+      iconOpen.classList.toggle("hidden", open);
+      iconClose.classList.toggle("hidden", !open);
+    };
 
-		toggle.addEventListener('click', () => setOpen(!open));
+    toggle.addEventListener("click", () => setOpen(!open));
 
-		for (const link of $$('[data-menu-link]')) {
-			link.addEventListener('click', () => setOpen(false));
-		}
+    for (const link of $$("[data-menu-link]")) {
+      link.addEventListener("click", () => setOpen(false));
+    }
 
-		document.addEventListener('keydown', (event) => {
-			if (event.key === 'Escape' && open) {
-				setOpen(false);
-				toggle.focus();
-			}
-		});
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && open) {
+        setOpen(false);
+        toggle.focus();
+      }
+    });
 
-		// Clic fuera del menú
-		document.addEventListener('pointerdown', (event) => {
-			if (open && !menu.contains(event.target as Node)) setOpen(false);
-		});
-	}
+    // Clic fuera del menú
+    document.addEventListener("pointerdown", (event) => {
+      if (open && !menu.contains(event.target as Node)) setOpen(false);
+    });
+  }
 </script>
