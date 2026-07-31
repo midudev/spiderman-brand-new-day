@@ -55,7 +55,7 @@ export function tiltTrapezoidIn(target: string) {
 	}
 
 	gsap.set(el, {
-		transformOrigin: '50% 0%',
+		transformOrigin: '100% 0%',
 		clipPath: TRAP_TOP,
 		rotateX: ANGLE_IN,
 		transformPerspective: PERSPECTIVE
