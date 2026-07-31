@@ -100,7 +100,7 @@ const galleryJson = JSON.stringify(
 				<ArrowRight class="size-4" aria-hidden="true" />
 			</button>
 
-			<figure class="galeria-lightbox__frame overflow-hidden shadow-[0_24px_64px_rgb(0_0_0/0.45)]">
+			<figure class="galeria-lightbox__frame overflow-hidden shadow-[0_24px_64px_rgb(0_0_0_/_0.45)]">
 				<picture>
 					<source data-galeria-source type="image/avif" />
 					<img
@@ -295,8 +295,7 @@ const galleryJson = JSON.stringify(
 			event.preventDefault()
 		}
 
-		const applyImage = (next: number) => {
-			index = (next + images.length) % images.length
+		const applyImage = () => {
 			const item = images[index]
 			source.srcset = item.avif
 			img.src = item.webp
@@ -306,14 +305,23 @@ const galleryJson = JSON.stringify(
 
 		const show = async (next: number, direction = 0) => {
 			const token = ++navToken
+			// Comprometer el índice de forma síncrona, antes de cualquier await: los
+			// handlers leen `index` en el momento del clic, y si la mutación esperase
+			// al await, varios clics rápidos leerían el mismo valor y todos apuntarían
+			// al mismo destino (avanzaba 1 en vez de N).
+			index = (next + images.length) % images.length
 
 			if (!direction || prefersReducedMotion()) {
 				gsap.killTweensOf(img)
 				gsap.set(img, { clearProps: 'transform,opacity,visibility' })
-				applyImage(next)
+				applyImage()
 				return
 			}
 
+			// El killTweensOf de show() es lo que corta el fade anterior: GSAP no resuelve
+			// la promesa del tween al matarlo, así que el guard del navToken de abajo casi
+			// nunca corre. No quitar el killTweensOf pensando que el token lo cubre; el
+			// token solo protege de verdad tras el decode().
 			gsap.killTweensOf(img)
 			await gsap.to(img, {
 				x: -direction * 40,
@@ -323,7 +331,7 @@ const galleryJson = JSON.stringify(
 			})
 			if (token !== navToken) return
 
-			applyImage(next)
+			applyImage()
 			try {
 				await img.decode()
 			} catch {
