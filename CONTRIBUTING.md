@@ -1,4 +1,4 @@
-# CONTRIBUTING.md
+# Guía de contribución
 
 ## Bienvenido a Spider-Man: Brand New Day 🕷️
 

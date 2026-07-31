@@ -23,7 +23,7 @@
 - [Web promocional de Spider-Man: Brand New Day](#web-promocional-de-spider-man-brand-new-day)
 - [Características principales](#características-principales)
 - [Para empezar](#para-empezar)
-  - [Prerequisitos](#prerequisitos)
+  - [Prerrequisitos](#prerrequisitos)
   - [Instalación](#instalación)
   - [Comandos](#comandos)
 - [Estructura del proyecto](#estructura-del-proyecto)
@@ -45,7 +45,7 @@
 
 ## Para empezar
 
-### Prerequisitos
+### Prerrequisitos
 
 - NVM (recomendado para asegurar la versión de Node) — ver [documentación oficial](https://github.com/nvm-sh/nvm?tab=readme-ov-file#installing-and-updating)
 
@@ -91,7 +91,7 @@
 | `pnpm dev` | Servidor de desarrollo en `localhost:4321` |
 | `pnpm build` | Build de producción en `./dist/` |
 | `pnpm preview` | Previsualiza el build localmente |
-| `pnpm deploy` | Build y despliegue en Cloudflare Workers |
+| `pnpm deploy` | ⚠️ **Solo mantenedores** — build y despliegue a producción en Cloudflare Workers |
 
 <p align="right">(<a href="#readme-top">volver arriba</a>)</p>
 
