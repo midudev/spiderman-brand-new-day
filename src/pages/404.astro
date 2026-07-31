@@ -1,0 +1,188 @@
+---
+import Layout from '@/layouts/Layout.astro'
+import ResponsiveImage from '@/components/ResponsiveImage.astro'
+import ArrowRight from '@/assets/icons/arrow-right.svg'
+import { PILL } from '@/consts'
+---
+
+<Layout
+	title="Página no encontrada — Spider-Man: Brand New Day"
+	description="La página que buscas no existe. Vuelve al inicio para ver el tráiler, la sinopsis y la galería."
+	noindex
+>
+	<main
+		class="suit relative grid min-h-screen place-items-center overflow-hidden bg-blue-dark px-6 py-16"
+	>
+		<!-- El recorte ya trae su propio hilo de tela saliendo por arriba, así que
+		     cuelga y se balancea desde ese punto. Va anclado al centro (`50%` +
+		     media columna) y no al borde derecho: si se pegara al borde, en un
+		     monitor ancho se alejaría del texto, que sí está centrado. Solo a
+		     partir de 1024px: por debajo se le echa encima al logo, y en móvil
+		     taparía la página entera. -->
+		<div
+			class="spidey pointer-events-none absolute top-[-4%] left-[calc(50%+16rem)] hidden w-[min(calc(50vw-14rem),520px)] lg:block"
+			aria-hidden="true"
+		>
+			<ResponsiveImage
+				base="spiderman-partners"
+				widths={[500, 847]}
+				sizes="(min-width: 1024px) min(calc(50vw - 14rem), 520px), 0px"
+				width={847}
+				height={800}
+				alt=""
+				class="h-auto w-full"
+				loading="eager"
+			/>
+		</div>
+
+		<div
+			class="relative flex w-full max-w-2xl flex-col items-center text-center"
+		>
+			<a href="/" class="rise w-[min(60vw,280px)]" aria-label="Inicio">
+				<ResponsiveImage
+					base="logo"
+					widths={[600, 1200]}
+					sizes="(min-width: 768px) 280px, 60vw"
+					width={1200}
+					height={638}
+					alt="Marvel Studios — Spider-Man: Brand New Day"
+					class="h-auto w-full"
+					loading="eager"
+					fetchpriority="high"
+				/>
+			</a>
+
+			<!-- El número es el adorno; el encabezado real es la frase de abajo. -->
+			<p
+				class="rise mt-14 font-display text-[clamp(5rem,22vw,11rem)] leading-none uppercase text-neutral-white"
+				aria-hidden="true"
+			>
+				404
+			</p>
+
+			<h1
+				class="rise mt-6 font-display text-title-small uppercase tracking-wide text-neutral-white"
+			>
+				Esta página también ha desaparecido
+			</h1>
+
+			<p
+				class="rise mt-4 max-w-md font-body text-body-medium text-neutral-white/70"
+			>
+				Nadie recuerda haberla visto. Vuelve al inicio para ver el tráiler, la
+				sinopsis y la galería.
+			</p>
+
+			<a
+				href="/"
+				class:list={[
+					'rise mt-10 flex h-12 items-center gap-3 rounded-full px-6 font-display text-title-small uppercase tracking-wide',
+					PILL
+				]}
+			>
+				Volver al inicio
+				<ArrowRight class="size-4" aria-hidden="true" />
+			</a>
+		</div>
+	</main>
+</Layout>
+
+<style>
+	/* Textura del traje, sin assets: el tejido triangular por debajo y la
+	   telaraña por encima, las dos en blanco a muy baja opacidad para no
+	   comerse el contraste del texto. El origen de la tela cae justo detrás
+	   del 404. */
+	.suit {
+		--web: rgb(255 255 255 / 0.07);
+		--weave: rgb(255 255 255 / 0.022);
+
+		background-image:
+			/* radios de la telaraña (16 hilos) */
+			repeating-conic-gradient(
+				from 11.25deg at 50% 38%,
+				var(--web) 0deg 0.28deg,
+				transparent 0.28deg 22.5deg
+			),
+			/* anillos: la separación crece hacia fuera, como en una tela real */
+			radial-gradient(
+				circle at 50% 38%,
+				transparent 0 72px,
+				var(--web) 72px 73px,
+				transparent 73px 158px,
+				var(--web) 158px 159px,
+				transparent 159px 266px,
+				var(--web) 266px 267px,
+				transparent 267px 400px,
+				var(--web) 400px 401px,
+				transparent 401px 566px,
+				var(--web) 566px 567px,
+				transparent 567px
+			),
+			/* tejido del traje: malla triangular a 0/60/120° */
+			repeating-linear-gradient(0deg, var(--weave) 0 1px, transparent 1px 5px),
+			repeating-linear-gradient(60deg, var(--weave) 0 1px, transparent 1px 5px),
+			repeating-linear-gradient(120deg, var(--weave) 0 1px, transparent 1px 5px);
+	}
+
+	.spidey {
+		/* El punto por el que agarra la tela en el recorte: el balanceo pivota
+		   ahí, no en el centro de la imagen. */
+		transform-origin: 76% 4%;
+	}
+
+	/* Las animaciones se añaden en `no-preference` en vez de apagarse en
+	   `reduce`. Así el estado por defecto —sin animación— ya es el visible: si
+	   algo no las ejecuta (impresión, un visor raro, un bot), la página se ve
+	   entera igual. Al revés, con `opacity: 0` en el `from` y `fill-mode: both`,
+	   una animación que no arranca deja la página en blanco. */
+	@media (prefers-reduced-motion: no-preference) {
+		/* `translate` y `rotate` son propiedades independientes, así que la
+		   caída de entrada y el balanceo continuo conviven sin pisarse un
+		   `transform` común. */
+		.spidey {
+			animation:
+				spidey-drop 1.1s cubic-bezier(0.22, 1, 0.36, 1) both,
+				spidey-swing 5s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate;
+		}
+
+		.rise {
+			animation: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+		}
+
+		.rise:nth-child(2) {
+			animation-delay: 0.09s;
+		}
+		.rise:nth-child(3) {
+			animation-delay: 0.18s;
+		}
+		.rise:nth-child(4) {
+			animation-delay: 0.27s;
+		}
+		.rise:nth-child(5) {
+			animation-delay: 0.36s;
+		}
+	}
+
+	@keyframes spidey-drop {
+		from {
+			translate: 0 -12%;
+			opacity: 0;
+		}
+	}
+
+	@keyframes spidey-swing {
+		from {
+			rotate: -2.2deg;
+		}
+		to {
+			rotate: 2.2deg;
+		}
+	}
+
+	@keyframes rise {
+		from {
+			translate: 0 18px;
+			opacity: 0;
+		}
+	}
+</style>

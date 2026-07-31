@@ -1,7 +1,10 @@
 {
 	"name": "spiderman-brand-new-day-web",
 	"compatibility_date": "2026-07-29",
+	// `not_found_handling` por defecto es "none": las rutas que no existen
+	// devuelven un 404 con el cuerpo vacío y dist/404.html no se llega a servir.
 	"assets": {
-		"directory": "./dist"
+		"directory": "./dist",
+		"not_found_handling": "404-page"
 	}
 }
