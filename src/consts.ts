@@ -44,8 +44,6 @@ export interface Section {
 /** Secciones de la página, en orden. El indicador del menú se apoya en esta lista. */
 export const SECTIONS: Section[] = [
 	{ id: 'trailer', label: 'Trailer' },
-	// TODO: la sección «Estreno» sale en el menú del diseño pero todavía no existe
-	// en la página; hasta que se cree, su enlace no lleva a ninguna parte.
 	{ id: 'estreno', label: 'Estreno' },
 	{ id: 'sinopsis', label: 'Sinopsis' },
 	{ id: 'videos', label: 'Videos' },
