@@ -6,18 +6,18 @@
 //     abajo a la derecha.
 //   - Cerrado (resto de la página): sólo la píldora «Ver trailer». Vuelve a
 //     abrirse al hacer hover/focus.
+import { PILL } from "@/consts"
 import PlayVideoButton from "@/components/PlayVideoButton.astro"
 ---
 
-<!-- El relleno y el fondo de píldora viven en el CSS de abajo, no en utilidades
-     (`p-2` / `PILL`): el estado cerrado en móvil necesita anular ambos, y
-     tenerlos como utilidades obligaba a duplicar la clase para ganar la
-     cascada. Así el estado cerrado se expresa sin pelear especificidad. -->
 <button
   type="button"
   data-trailer-cta
   data-trailer-open
-  class="trailer-cta pointer-events-auto font-display uppercase text-neutral-white"
+  class:list={[
+    "p-2 trailer-cta pointer-events-auto font-display uppercase",
+    PILL,
+  ]}
   aria-label="Ver tráiler oficial"
 >
   <picture class="trailer-cta__media">
@@ -55,30 +55,14 @@ import PlayVideoButton from "@/components/PlayVideoButton.astro"
     display: flex;
     align-items: flex-start;
     height: var(--h);
-    padding: 0.5rem;
     padding-right: calc(var(--h) * 0.03);
     border: 0;
     cursor: pointer;
     text-align: left;
-    /* Mismo aspecto que `PILL`, pero como estilo propio del componente. */
-    background-color: color-mix(
-      in oklab,
-      var(--color-neutral-dark) 60%,
-      transparent
-    );
-    backdrop-filter: blur(12px);
     transition:
       height 0.5s cubic-bezier(0.22, 1, 0.36, 1),
       padding 0.5s cubic-bezier(0.22, 1, 0.36, 1),
       background-color 0.2s ease;
-  }
-
-  .trailer-cta:hover {
-    background-color: color-mix(
-      in oklab,
-      var(--color-neutral-dark) 80%,
-      transparent
-    );
   }
 
   .trailer-cta__media {
@@ -191,10 +175,7 @@ import PlayVideoButton from "@/components/PlayVideoButton.astro"
   }
 
   /* En móvil la píldora convive con las redes en la misma fila y no cabe con
-     texto (se salía de pantalla por debajo de ~375px): queda sólo el play.
-     Sin texto, la píldora debe ceñirse al play: el `padding-right` heredado
-     (`--closed-play-space`, 63px) y el `__body` vacío dejaban 95px de caja para
-     un botón de 42, con el hueco todo a un lado. */
+     texto (se salía de pantalla por debajo de ~375px): queda sólo el play. */
   @media (max-width: 639px) {
     .trailer-cta--closed .trailer-cta__short {
       max-width: 0;
@@ -204,28 +185,26 @@ import PlayVideoButton from "@/components/PlayVideoButton.astro"
       opacity: 0;
     }
 
-    /* Sin texto no hay nada que envolver: el play ya trae su propio fondo
-       blanco redondo, así que la píldora detrás sólo asomaba como un recuadro
-       suelto. Se queda el play a secas. */
-    .trailer-cta--closed,
-    .trailer-cta--closed:hover {
+    /* Sin texto no queda nada que envolver: el play ya trae su propio fondo
+       blanco redondo, así que la píldora sólo asomaba como un recuadro suelto
+       de 95×48 alrededor de un botón de 42×34, con el hueco descentrado.
+       La caja conserva los 48px de alto para no descolgarse de la fila de
+       redes ni encoger el área táctil; el relleno restante es transparente. */
+    .trailer-cta--closed {
       gap: 0;
-      height: auto;
-      padding: 0;
-      justify-content: center;
+      padding: 0 calc(var(--h) * 0.03) 0 0;
       background-color: transparent;
       backdrop-filter: none;
     }
 
     /* Vacíos en este estado: si ocupan, descentran el play. La imagen además
-       conserva `height: 48px` con `width: 0`, así que estiraba la caja a lo
-       alto aunque no se viera. */
+       conserva `height: 48px` con `width: 0`, así que estiraba la caja. */
     .trailer-cta--closed .trailer-cta__body,
     .trailer-cta--closed .trailer-cta__media {
       display: none;
     }
 
-    /* En flujo, el play define el tamaño de la píldora y queda centrado. */
+    /* En flujo, el play define el ancho de la caja y queda centrado. */
     .trailer-cta--closed .trailer-cta__play {
       position: static;
     }
