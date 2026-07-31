@@ -96,13 +96,21 @@ export function createPinnedTiltSection({
 	const exitDistance = () => window.innerHeight * EXIT_SCROLL;
 	const totalDistance = () => mainDistance() + exitDistance();
 
-	const render = (progress: number) => {
-		const scroll = progress * totalDistance();
-		const mainProgress = gsap.utils.clamp(0, 1, scroll / mainDistance());
+	const render = (smoothed: number, raw: number) => {
+		// El cuerpo principal (carrusel / mazo) sigue el valor suavizado: ahí
+		// vive la inercia que aporta la PR.
+		const mainProgress = gsap.utils.clamp(
+			0,
+			1,
+			(smoothed * totalDistance()) / mainDistance()
+		);
+		// La salida va cruda (clavada 1:1 al scroll) para que el tilt llegue a
+		// su ángulo final justo cuando ScrollTrigger suelta el pin, sin quedarse
+		// atrás por el lerp a velocidad de scroll alta.
 		const exitProgress = gsap.utils.clamp(
 			0,
 			1,
-			(scroll - mainDistance()) / exitDistance()
+			(raw * totalDistance() - mainDistance()) / exitDistance()
 		);
 
 		onProgress(mainProgress);
@@ -132,7 +140,7 @@ export function createPinnedTiltSection({
 			current = target;
 			stopTicker();
 		}
-		render(current);
+		render(current, target);
 	}
 
 	const update = (progress: number) => {
@@ -154,10 +162,10 @@ export function createPinnedTiltSection({
 			// Sin lerp en refresh: evita drift al redimensionar.
 			current = target = self.progress;
 			if (ticking) stopTicker();
-			render(self.progress);
+			render(self.progress, self.progress);
 		},
 		onUpdate: (self) => update(self.progress)
 	});
 
-	render(0);
+	render(0, 0);
 }
