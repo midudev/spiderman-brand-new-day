@@ -6,7 +6,9 @@ export const TICKETS_URL = 'https://sonypictures.es/pelicula/spiderman-brand-new
 /** Tráiler oficial en YouTube (embed nocookie). */
 export const TRAILER_YOUTUBE = {
 	id: 'owfWVJoxXR4',
-	start: 25
+	start: 25,
+	/** Fecha de publicación en YouTube. La usa el `VideoObject` del JSON-LD. */
+	uploadDate: '2026-03-18'
 } as const;
 
 export const SEO = {
