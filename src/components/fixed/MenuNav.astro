@@ -173,6 +173,11 @@ const initial = SECTIONS[0].label;
 
 	for (const link of $$<HTMLAnchorElement>('[data-menu-link]')) {
 		link.addEventListener('click', (event) => {
+			// Con modificador (Cmd/Ctrl: pestaña nueva, Shift: ventana nueva,
+			// Alt: descarga) se sale antes del preventDefault(): el gesto es
+			// del navegador, no de la transición.
+			if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
 			const id = link.dataset.menuLink;
 			const top = id ? sectionTops.get(id) : undefined;
 			if (!main || top === undefined || prefersReducedMotion()) return;
