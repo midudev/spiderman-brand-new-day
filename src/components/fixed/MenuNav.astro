@@ -182,6 +182,10 @@ const initial = SECTIONS[0].label;
 			const top = id ? sectionTops.get(id) : undefined;
 			if (!main || top === undefined || prefersReducedMotion()) return;
 
+			// Ya estamos en el destino: fundir la página para acabar en el mismo
+			// sitio sería un parpadeo inútil. El margen absorbe redondeos del scroll.
+			if (Math.abs(window.scrollY - top) < 2) return;
+
 			event.preventDefault();
 			history.pushState(null, '', `#${id}`);
 
