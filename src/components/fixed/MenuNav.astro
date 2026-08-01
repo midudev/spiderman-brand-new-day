@@ -190,7 +190,20 @@ const initial = SECTIONS[0].label;
 					// llega asíncrono; esto deja el indicador bien antes del fade-in.
 					updateCurrentSection();
 				})
-				.to(main, { autoAlpha: 1, duration: 0.5, ease: 'power2.out' });
+				.to(main, { autoAlpha: 1, duration: 0.5, ease: 'power2.out' })
+				// El preventDefault() de arriba también anula el movimiento de foco
+				// del ancla nativa: sin esto, quien navegue con teclado seguiría
+				// tabulando desde el principio del documento. No puede enfocarse en
+				// el salto: ahí <main> sigue en visibility:hidden por autoAlpha (un
+				// elemento oculto no es enfocable) y el primer frame del fade-in
+				// lo re-oculta un instante, desenfocando igualmente. Por eso el
+				// focus() entra ya arrancado el fade-in, con visibilidad estable.
+				// `preventScroll` evita que el focus() pelee con el salto.
+				.add(() => {
+					const target = id ? $(`#${id}`) : null;
+					target?.setAttribute('tabindex', '-1');
+					target?.focus({ preventScroll: true });
+				}, '<+=0.08');
 		});
 	}
 
