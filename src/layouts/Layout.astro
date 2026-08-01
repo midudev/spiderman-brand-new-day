@@ -8,10 +8,11 @@ interface Props {
   description?: string
   image?: string
   imageAlt?: string
+  type?: 'website' | 'video.movie'
   noindex?: boolean
 }
 
-const { title, description, image, imageAlt, noindex } = Astro.props
+const { title, description, image, imageAlt, type, noindex } = Astro.props
 ---
 
 <!doctype html>
@@ -38,6 +39,7 @@ const { title, description, image, imageAlt, noindex } = Astro.props
       description={description}
       image={image}
       imageAlt={imageAlt}
+      type={type}
       noindex={noindex}
     />
   </head>
