@@ -171,7 +171,7 @@ const initial = SECTIONS[0].label;
 	const main = $('main');
 	let transition: gsap.core.Timeline | null = null;
 
-	for (const link of $$<HTMLAnchorElement>('[data-menu-link]')) {
+	for (const link of $$('[data-menu-link]')) {
 		link.addEventListener('click', (event) => {
 			// Con modificador (Cmd/Ctrl: pestaña nueva, Shift: ventana nueva,
 			// Alt: descarga) se sale antes del preventDefault(): el gesto es
