@@ -6,7 +6,6 @@
 //     abajo a la derecha.
 //   - Cerrado (resto de la página): sólo la píldora «Ver trailer». Vuelve a
 //     abrirse al hacer hover/focus.
-import { PILL } from "@/consts"
 import PlayVideoButton from "@/components/PlayVideoButton.astro"
 ---
 
@@ -14,10 +13,9 @@ import PlayVideoButton from "@/components/PlayVideoButton.astro"
   type="button"
   data-trailer-cta
   data-trailer-open
-  class:list={[
-    "p-2 trailer-cta pointer-events-auto font-display uppercase",
-    PILL,
-  ]}
+  class={
+    "p-2 trailer-cta pointer-events-auto font-display uppercase bg-neutral-dark/60 backdrop-blur-md text-neutral-white transition-colors"
+  }
   aria-label="Ver tráiler oficial"
 >
   <picture class="trailer-cta__media">
@@ -63,6 +61,8 @@ import PlayVideoButton from "@/components/PlayVideoButton.astro"
       height 0.5s cubic-bezier(0.22, 1, 0.36, 1),
       padding 0.5s cubic-bezier(0.22, 1, 0.36, 1),
       background-color 0.2s ease;
+    border-radius: 16px;   
+	  overflow: hidden;      
   }
 
   .trailer-cta__media {
@@ -145,6 +145,8 @@ import PlayVideoButton from "@/components/PlayVideoButton.astro"
     justify-content: center;
     gap: 10px;
     padding: 0 var(--closed-play-space) 0 10px;
+    background-color: transparent;  
+	  backdrop-filter: none;           
   }
 
   .trailer-cta--closed .trailer-cta__media {

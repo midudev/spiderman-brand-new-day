@@ -2,7 +2,6 @@
 import Layout from '@/layouts/Layout.astro'
 import ResponsiveImage from '@/components/ResponsiveImage.astro'
 import ArrowRight from '@/assets/icons/arrow-right.svg'
-import { PILL } from '@/consts'
 ---
 
 <Layout
@@ -75,10 +74,9 @@ import { PILL } from '@/consts'
 
 			<a
 				href="/"
-				class:list={[
-					'rise mt-10 flex h-12 items-center gap-3 rounded-full px-6 font-display text-title-small uppercase tracking-wide',
-					PILL
-				]}
+				class={
+					'rise mt-10 flex h-12 items-center gap-3 rounded-full px-6 font-display text-title-small uppercase tracking-wide'
+				}
 			>
 				Volver al inicio
 				<ArrowRight class="size-4" aria-hidden="true" />

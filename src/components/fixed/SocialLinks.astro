@@ -1,6 +1,5 @@
 ---
 // Abajo a la izquierda: redes sociales.
-import { PILL } from '@/consts';
 import Instagram from '@/assets/icons/instagram.svg';
 import X from '@/assets/icons/x.svg';
 import Facebook from '@/assets/icons/facebook.svg';
@@ -22,10 +21,9 @@ const redes = [
 					target="_blank"
 					rel="noopener noreferrer"
 					aria-label={`${nombre} (abre en una pestaña nueva)`}
-					class:list={[
-						'social-link grid size-12 place-items-center rounded-full',
-						PILL
-					]}
+					class={
+						'social-link grid size-12 place-items-center rounded-full'
+					}
 				>
 					<Icono class="size-5" aria-hidden="true" />
 				</a>

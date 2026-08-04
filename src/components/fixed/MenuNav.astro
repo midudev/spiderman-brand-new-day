@@ -2,7 +2,7 @@
 // Arriba a la izquierda: un solo botón (icono + sección actual). Al abrirlo,
 // la etiqueta deja paso al panel con el índice de secciones. La página de detrás
 // no se toca: ni velo, ni desenfoque, ni cambio de opacidad.
-import { SECTIONS, PILL } from '@/consts';
+import { SECTIONS } from '@/consts';
 import Menu from '@/assets/icons/menu.svg';
 import Close from '@/assets/icons/close.svg';
 
@@ -16,11 +16,11 @@ const initial = SECTIONS[0].label;
 		aria-label="Abrir menú"
 		aria-expanded="false"
 		aria-controls="menu-panel"
-		class="menu-toggle flex items-stretch gap-[2px]"
+		class="menu-toggle flex items-stretch gap-[2px] rounded-full overflow-hidden"
 	>
 		<span
 			data-menu-part
-			class:list={['grid size-12 shrink-0 place-items-center rounded-full', PILL]}
+			class={'grid size-12 shrink-0 place-items-center'}
 		>
 			<Menu class="w-[18px]" data-menu-icon="open" aria-hidden="true" />
 			<Close class="hidden w-3.5" data-menu-icon="close" aria-hidden="true" />
@@ -32,10 +32,9 @@ const initial = SECTIONS[0].label;
 		<span
 			data-menu-part
 			data-menu-current
-			class:list={[
-				'hidden h-12 w-[122px] items-center gap-[5px] px-4 font-display text-title-small uppercase tracking-wide sm:flex',
-				PILL
-			]}
+			class={
+				'hidden h-12 w-[122px] items-center gap-[5px] px-4 font-display text-title-small uppercase tracking-wide sm:flex'
+			}
 		>
 			<span class="size-1.5 shrink-0 rounded-full bg-current" aria-hidden="true"></span>
 			<span data-current-section aria-live="polite">{initial}</span>
@@ -44,10 +43,9 @@ const initial = SECTIONS[0].label;
 
 	<nav id="menu-panel" data-menu-panel hidden aria-label="Secciones" class="menu-panel">
 		<ul
-			class:list={[
-				'flex w-[220px] flex-col px-4 font-display text-title-small uppercase tracking-wide text-neutral-white',
-				PILL
-			]}
+			class={
+				'flex w-[220px] flex-col px-4 font-display text-title-small uppercase tracking-wide text-neutral-white'
+			}
 		>
 			{
 				SECTIONS.map((section) => (
@@ -78,6 +76,7 @@ const initial = SECTIONS[0].label;
 			in oklab,
 			var(--color-neutral-dark) 80%,
 			transparent
+			
 		);
 	}
 
