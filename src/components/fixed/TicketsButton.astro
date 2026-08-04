@@ -15,6 +15,13 @@ import Ticket from "@/assets/icons/ticket.svg"
   aria-label="Entradas (abre en una pestaña nueva)"
 >
   <span
+    class={
+      "ticket ticket--right hidden h-12 items-center px-4 font-display text-title-small uppercase tracking-wide sm:flex"
+    }
+  >
+    Entradas
+  </span>
+  <span
   class={"ticket ticket--left grid size-12 place-items-center"}
   aria-hidden="true"
   >
@@ -22,13 +29,6 @@ import Ticket from "@/assets/icons/ticket.svg"
         manda el icono de ticket y a partir de `sm` vuelve la flecha. */}
     <Ticket class="size-5 sm:hidden" />
     <ArrowRight class="hidden size-4 sm:block" />
-  </span>
-  <span
-    class={
-      "ticket ticket--right hidden h-12 items-center px-6 font-display text-title-small uppercase tracking-wide sm:flex"
-    }
-  >
-    Entradas
   </span>
 </a>
 
