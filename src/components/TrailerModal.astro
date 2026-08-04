@@ -11,13 +11,17 @@ const embedSrc = `https://www.youtube-nocookie.com/embed/${TRAILER_YOUTUBE.id}?a
 	class="trailer-modal m-auto w-full max-w-[min(96vw,56rem)] border-0 bg-transparent p-0"
 	aria-labelledby="trailer-modal-title"
 >
-	<div class="relative w-full">
+	<!-- El botón de cerrar vive dentro del padding superior del panel (mismo
+	     patrón que la galería): posicionado fuera del box del dialog, el
+	     `overflow: hidden` de `.trailer-modal` lo recortaba por completo —
+	     invisible e inclickeable, y encima `showModal()` le daba el foco inicial. -->
+	<div class="relative w-full pt-11">
 		<h2 id="trailer-modal-title" class="sr-only">Tráiler oficial</h2>
 
 		<button
 			type="button"
 			data-trailer-modal-close
-			class="absolute -top-11 right-0 z-[1] grid size-10 place-items-center rounded-full bg-neutral-dark/60 text-neutral-white backdrop-blur-md transition-colors hover:bg-neutral-dark/80 focus-visible:bg-neutral-dark/80"
+			class="absolute top-0 right-0 z-[1] grid size-10 place-items-center rounded-full bg-neutral-dark/60 text-neutral-white backdrop-blur-md transition-colors hover:bg-neutral-dark/80 focus-visible:bg-neutral-dark/80"
 			aria-label="Cerrar tráiler"
 		>
 			<Close class="size-3.5" aria-hidden="true" />
