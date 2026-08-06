@@ -174,42 +174,6 @@ import PlayVideoButton from "@/components/PlayVideoButton.astro"
     transition-delay: 0.2s;
   }
 
-  /* En móvil la píldora convive con las redes en la misma fila y no cabe con
-     texto (se salía de pantalla por debajo de ~375px): queda sólo el play. */
-  @media (max-width: 639px) {
-    .trailer-cta--closed .trailer-cta__short {
-      max-width: 0;
-    }
-
-    .trailer-cta--closed .trailer-cta__short::after {
-      opacity: 0;
-    }
-
-    /* Sin texto no queda nada que envolver: el play ya trae su propio fondo
-       blanco redondo, así que la píldora sólo asomaba como un recuadro suelto
-       de 95×48 alrededor de un botón de 42×34, con el hueco descentrado.
-       La caja conserva los 48px de alto para no descolgarse de la fila de
-       redes ni encoger el área táctil; el relleno restante es transparente. */
-    .trailer-cta--closed {
-      gap: 0;
-      padding: 0 calc(var(--h) * 0.03) 0 0;
-      background-color: transparent;
-      backdrop-filter: none;
-    }
-
-    /* Vacíos en este estado: si ocupan, descentran el play. La imagen además
-       conserva `height: 48px` con `width: 0`, así que estiraba la caja. */
-    .trailer-cta--closed .trailer-cta__body,
-    .trailer-cta--closed .trailer-cta__media {
-      display: none;
-    }
-
-    /* En flujo, el play define el ancho de la caja y queda centrado. */
-    .trailer-cta--closed .trailer-cta__play {
-      position: static;
-    }
-  }
-
   /* El último del bloque: así anula las transiciones de los dos estados.
      El cambio abierto/cerrado sigue ocurriendo, pero sin recorrido. */
   @media (prefers-reduced-motion: reduce) {
