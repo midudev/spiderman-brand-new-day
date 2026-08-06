@@ -187,6 +187,7 @@ const PHRASES = [
   const $dateText = $("[data-date-text]") as SVGTextElement | null
   const $dateBlur = $("[data-date-blur]") as SVGFEGaussianBlurElement | null
   const $heroVideo = $("[data-hero-video]") as HTMLVideoElement | null
+  const $media = $("[data-hero-media]") as HTMLElement | null
   const $swing = $("[data-hero-swing]") as HTMLVideoElement | null
 
   const phrases = $$("[data-hero-phrase]")
@@ -197,8 +198,28 @@ const PHRASES = [
   const letterDur = 2
   const letterStagger = 0.15
   const hold = 4
-  /** Punto de la timeline en el que arrancan las frases. */
-  const PHRASE_START = 34
+
+  /* La fecha entra desbordando la pantalla y baja hasta su tamaño legible: por
+     el hueco de las letras sólo se ve el vídeo, y el velo negro se va cerrando
+     alrededor según encoge. Se escala el <text> de la máscara en vez de animar
+     `font-size`, así el interletraje se mantiene proporcional en todo el
+     recorrido. */
+  /** Tamaño de entrada, en múltiplos del final. A 4.5 apenas cabe un par de cifras. */
+  const DATE_ZOOM = 4.5
+  /** Centro del texto en coordenadas del viewBox: el escalado tira de ahí. */
+  const DATE_ORIGIN = "500 150"
+  /** Zoom de salida del plano de fondo, en paralelo a la fecha. */
+  const MEDIA_ZOOM = 1.5
+  /** Bajada de tamaño y salida. Sin pausa entre las dos: la salida arranca en el
+      frame en que termina la bajada, así el encogido es un único movimiento. */
+  const DATE_IN = 26
+  const DATE_OUT = 8
+  const DATE_EXIT = DATE_IN
+  /** La máscara sale un pelo después que el fondo, no a la vez. */
+  const DATE_OFFSET = 0.5
+
+  /** Punto de la timeline en el que arrancan las frases: justo al irse la fecha. */
+  const PHRASE_START = DATE_EXIT + DATE_OUT
 
   if ($heroVideo && !reducedMotion) {
     onLoadingReady(() => {
@@ -216,23 +237,49 @@ const PHRASES = [
         trigger: $section,
         start: "top top",
         end: "bottom bottom",
-        scrub: 0.6,
+        // Segundos que tarda la animación en alcanzar al scroll. Cuanto más
+        // alto, más se desliza al soltar la rueda en vez de clavarse al frame.
+        scrub: 1,
       },
     })
 
-    tl.fromTo($cover, { opacity: 0 }, { opacity: 1, duration: 12 }, 0)
+    tl.fromTo($cover, { opacity: 0 }, { opacity: 1, duration: 5 }, 0)
+      // `power1.out` (cuadrática) y no algo de grado mayor: suaviza la llegada
+      // sin aplanarse al final, que es lo que hacía que pareciera detenerse
+      // antes de tiempo.
       .fromTo(
         $dateText,
-        { attr: { "font-size": 210 } },
-        { attr: { "font-size": 250 }, duration: 22 },
-        0,
+        { scale: DATE_ZOOM, svgOrigin: DATE_ORIGIN },
+        {
+          scale: 1,
+          svgOrigin: DATE_ORIGIN,
+          duration: DATE_IN,
+          ease: "power1.out",
+        },
+        DATE_OFFSET,
       )
-      .to($dateBlur, { attr: { stdDeviation: BLUR / 3 }, duration: 12 }, 22)
+      .to($dateBlur, { attr: { stdDeviation: BLUR / 3 }, duration: DATE_OUT }, DATE_EXIT)
       .to(
         $dateText,
-        { attr: { "font-size": 100, "fill-opacity": 0 }, duration: 12 },
-        22,
+        {
+          scale: 0.4,
+          svgOrigin: DATE_ORIGIN,
+          attr: { "fill-opacity": 0 },
+          duration: DATE_OUT,
+        },
+        DATE_EXIT,
       )
+
+    // El plano de fondo abre cerrado y se aleja con la fecha: refuerza el «de
+    // grande a pequeño» sin que el encuadre pegue un salto.
+    if ($media) {
+      tl.fromTo(
+        $media,
+        { scale: MEDIA_ZOOM },
+        { scale: 1, duration: DATE_IN, ease: "power1.out" },
+        0,
+      )
+    }
 
     let phraseAt = PHRASE_START
 
