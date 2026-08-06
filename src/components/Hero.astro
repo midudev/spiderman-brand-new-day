@@ -99,6 +99,22 @@ const PHRASES = [
         height="5000"
         fill="#000004"
         mask="url(#hero-date-hole)"></rect>
+
+      <!-- La misma fecha, ya opaca. Releva al hueco de la máscara al final del
+           encogido: el hueco es una ventana al vídeo y no puede pintarse de un
+           color, así que la fecha «normal» tiene que ser un texto aparte encima. -->
+      <text
+        data-date-fill
+        class="font-display text-neutral-white"
+        x="500"
+        y="150"
+        text-anchor="middle"
+        dominant-baseline="central"
+        font-size="250"
+        letter-spacing="-6"
+        fill="currentColor"
+        opacity="0">{RELEASE_DATE}</text
+      >
     </svg>
 
     <!-- Por encima del velo de la fecha y por debajo de las frases: cuando
@@ -186,6 +202,7 @@ const PHRASES = [
   const $cover = $("[data-date-cover]") as SVGSVGElement | null
   const $dateText = $("[data-date-text]") as SVGTextElement | null
   const $dateBlur = $("[data-date-blur]") as SVGFEGaussianBlurElement | null
+  const $dateFill = $("[data-date-fill]") as SVGTextElement | null
   const $heroVideo = $("[data-hero-video]") as HTMLVideoElement | null
   const $media = $("[data-hero-media]") as HTMLElement | null
   const $swing = $("[data-hero-swing]") as HTMLVideoElement | null
@@ -210,14 +227,20 @@ const PHRASES = [
   const DATE_ORIGIN = "500 150"
   /** Zoom de salida del plano de fondo, en paralelo a la fecha. */
   const MEDIA_ZOOM = 1.5
-  /** Bajada de tamaño y salida. Sin pausa entre las dos: la salida arranca en el
-      frame en que termina la bajada, así el encogido es un único movimiento. */
+  /** Bajada de tamaño. */
   const DATE_IN = 26
+  /** Relevo del hueco al texto opaco. Solapa el final del encogido en vez de ir
+      detrás, para no reintroducir un tramo inmóvil. */
+  const DATE_SWAP = 4
+  /** Lo que aguanta la fecha ya legible antes de irse. Corto a propósito. */
+  const DATE_HOLD = 2
   const DATE_OUT = 8
-  const DATE_EXIT = DATE_IN
   /** La máscara sale un pelo después que el fondo, no a la vez. */
   const DATE_OFFSET = 0.5
 
+  /** Fin del encogido: aquí la fecha ya está a tamaño y del todo opaca. */
+  const DATE_SETTLED = DATE_OFFSET + DATE_IN
+  const DATE_EXIT = DATE_SETTLED + DATE_HOLD
   /** Punto de la timeline en el que arrancan las frases: justo al irse la fecha. */
   const PHRASE_START = DATE_EXIT + DATE_OUT
 
@@ -230,7 +253,7 @@ const PHRASES = [
     })
   }
 
-  if ($section && $cover && $dateText && $dateBlur && !reducedMotion) {
+  if ($section && $cover && $dateText && $dateBlur && $dateFill && !reducedMotion) {
     const tl = gsap.timeline({
       defaults: { ease: "none" },
       scrollTrigger: {
@@ -247,8 +270,10 @@ const PHRASES = [
       // `power1.out` (cuadrática) y no algo de grado mayor: suaviza la llegada
       // sin aplanarse al final, que es lo que hacía que pareciera detenerse
       // antes de tiempo.
+      // Los dos textos encogen a la vez y con la misma geometría: mientras uno
+      // es hueco y el otro opaco quedan superpuestos al pixel.
       .fromTo(
-        $dateText,
+        [$dateText, $dateFill],
         { scale: DATE_ZOOM, svgOrigin: DATE_ORIGIN },
         {
           scale: 1,
@@ -258,13 +283,35 @@ const PHRASES = [
         },
         DATE_OFFSET,
       )
-      .to($dateBlur, { attr: { stdDeviation: BLUR / 3 }, duration: DATE_OUT }, DATE_EXIT)
+      // Relevo: el hueco se cierra desenfocándose y debajo aparece la fecha en
+      // gris. Termina justo cuando acaba el encogido.
+      .to(
+        $dateBlur,
+        { attr: { stdDeviation: BLUR / 3 }, duration: DATE_SWAP },
+        DATE_SETTLED - DATE_SWAP,
+      )
       .to(
         $dateText,
+        { attr: { "fill-opacity": 0 }, duration: DATE_SWAP },
+        DATE_SETTLED - DATE_SWAP,
+      )
+      .fromTo(
+        $dateFill,
+        { opacity: 0 },
+        { opacity: 1, duration: DATE_SWAP },
+        DATE_SETTLED - DATE_SWAP,
+      )
+      // Salida: ya sólo queda el texto blanco, que sigue encogiendo y se apaga
+      // desenfocándose. Mismo `BLUR` con el que entran y salen las frases, para
+      // que la fecha se vaya con el mismo lenguaje con el que llegan ellas.
+      .fromTo(
+        $dateFill,
+        { filter: "blur(0px)" },
         {
           scale: 0.4,
           svgOrigin: DATE_ORIGIN,
-          attr: { "fill-opacity": 0 },
+          opacity: 0,
+          filter: `blur(${BLUR}px)`,
           duration: DATE_OUT,
         },
         DATE_EXIT,
