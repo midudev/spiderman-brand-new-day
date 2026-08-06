@@ -3,20 +3,40 @@ import { SEO } from "@/consts"
 
 const RELEASE_DATE = "29.07.26"
 
+/** La fecha se pinta dos veces —hueco de la máscara y texto opaco— y ambas
+ *  tienen que caer al píxel: el relevo entre las dos es un fundido cruzado.
+ *  La geometría vive aquí una sola vez para que no puedan desalinearse. */
+const DATE_GLYPH = {
+  x: 500,
+  y: 150,
+  "text-anchor": "middle",
+  "dominant-baseline": "central",
+  "font-size": 250,
+  "letter-spacing": -6,
+} as const
+
 const PHRASES = [
   ["El mundo", "ha olvidado", "a Peter"],
   ["pero él", "no los ha", "olvidado"],
 ]
 ---
 
-<section data-hero id="trailer" class="relative h-[520vh]">
+<!-- 640vh y no 520: el hero ha ganado una fase (el encogido de la fecha) y con
+     el alto anterior el reposo de la fecha se lo habría comido a las frases.
+     Con este alto el scroll por unidad de timeline queda como estaba. -->
+<section data-hero id="trailer" class="relative h-[640vh]">
   <!-- Único h1 del documento. El diseño confía el título al logo de la UI fija,
        así que aquí va sólo para lectores de pantalla y buscadores. -->
   <h1 class="sr-only">{SEO.title}</h1>
 
   <!-- Marcadores sin pintura: menú / CTA tráiler saben en qué punto del scroll estamos. -->
   <div data-hero-intro class="pointer-events-none absolute inset-x-0 top-0 h-screen" aria-hidden="true"></div>
-  <div id="estreno" class="pointer-events-none absolute inset-x-0 top-[18%] h-[40%]" aria-hidden="true"></div>
+  <!-- El menú salta al borde superior de este marcador, así que tiene que caer
+       dentro del reposo de la fecha: es la sección que existe para enseñarla.
+       El reposo va del 37,3% al 48,9% del alto de la sección; 43% lo centra.
+       Es independiente del viewport porque alto y rango escalan los dos con vh.
+       Se recalcula si cambian `DATE_IN`, `DATE_HOLD` o el alto de la sección. -->
+  <div id="estreno" class="pointer-events-none absolute inset-x-0 top-[43%] h-[40%]" aria-hidden="true"></div>
 
   <div data-hero-stage class="sticky top-0 h-screen w-full overflow-hidden">
     <div data-hero-media class="absolute inset-0">
@@ -79,12 +99,7 @@ const PHRASES = [
           <text
             data-date-text
             class="font-display"
-            x="500"
-            y="150"
-            text-anchor="middle"
-            dominant-baseline="central"
-            font-size="250"
-            letter-spacing="-6"
+            {...DATE_GLYPH}
             fill="#000"
             fill-opacity="1"
             filter="url(#hero-date-soft)">{RELEASE_DATE}</text
@@ -106,12 +121,7 @@ const PHRASES = [
       <text
         data-date-fill
         class="font-display text-neutral-white"
-        x="500"
-        y="150"
-        text-anchor="middle"
-        dominant-baseline="central"
-        font-size="250"
-        letter-spacing="-6"
+        {...DATE_GLYPH}
         fill="currentColor"
         opacity="0">{RELEASE_DATE}</text
       >
@@ -221,21 +231,28 @@ const PHRASES = [
      alrededor según encoge. Se escala el <text> de la máscara en vez de animar
      `font-size`, así el interletraje se mantiene proporcional en todo el
      recorrido. */
-  /** Tamaño de entrada, en múltiplos del final. A 4.5 apenas cabe un par de cifras. */
-  const DATE_ZOOM = 4.5
+  /** Tamaño de entrada, en múltiplos del final. */
+  const DATE_ZOOM = 6
   /** Centro del texto en coordenadas del viewBox: el escalado tira de ahí. */
   const DATE_ORIGIN = "500 150"
-  /** Zoom de salida del plano de fondo, en paralelo a la fecha. */
+  /** Zoom de entrada del plano de fondo: abre cerrado y se aleja a 1. */
   const MEDIA_ZOOM = 1.5
-  /** Bajada de tamaño. */
-  const DATE_IN = 26
+  /** Entrada del velo. Corta a propósito: si el velo tarda en opacarse, el paso
+      de «pantalla llena de vídeo» a «números» lo hace el fundido y no el
+      encogido. Opaco desde pronto, quien cierra la imagen son las letras. */
+  const COVER_IN = 2
+  /** Bajada de tamaño. Se lleva la mayor parte del scroll de la fecha: es el
+      movimiento, y quedarse quieto cuesta más caro al que scrollea. */
+  const DATE_IN = 38
   /** Relevo del hueco al texto opaco. Solapa el final del encogido en vez de ir
       detrás, para no reintroducir un tramo inmóvil. */
   const DATE_SWAP = 4
-  /** Lo que aguanta la fecha ya legible antes de irse. Corto a propósito. */
-  const DATE_HOLD = 2
+  /** Lo que aguanta la fecha legible antes de irse. Suficiente para leerla sin
+      prisa (~595 px de scroll), pero sin que la pantalla se quede congelada.
+      Si se toca, hay que recalcular el `top-[…]` del marcador `#estreno`. */
+  const DATE_HOLD = 12
   const DATE_OUT = 8
-  /** La máscara sale un pelo después que el fondo, no a la vez. */
+  /** La máscara entra un pelo después que el fondo, no a la vez. */
   const DATE_OFFSET = 0.5
 
   /** Fin del encogido: aquí la fecha ya está a tamaño y del todo opaca. */
@@ -253,7 +270,15 @@ const PHRASES = [
     })
   }
 
-  if ($section && $cover && $dateText && $dateBlur && $dateFill && !reducedMotion) {
+  if (
+    $section &&
+    $cover &&
+    $dateText &&
+    $dateBlur &&
+    $dateFill &&
+    $media &&
+    !reducedMotion
+  ) {
     const tl = gsap.timeline({
       defaults: { ease: "none" },
       scrollTrigger: {
@@ -266,7 +291,7 @@ const PHRASES = [
       },
     })
 
-    tl.fromTo($cover, { opacity: 0 }, { opacity: 1, duration: 5 }, 0)
+    tl.fromTo($cover, { opacity: 0 }, { opacity: 1, duration: COVER_IN }, 0)
       // `power1.out` (cuadrática) y no algo de grado mayor: suaviza la llegada
       // sin aplanarse al final, que es lo que hacía que pareciera detenerse
       // antes de tiempo.
@@ -284,7 +309,7 @@ const PHRASES = [
         DATE_OFFSET,
       )
       // Relevo: el hueco se cierra desenfocándose y debajo aparece la fecha en
-      // gris. Termina justo cuando acaba el encogido.
+      // blanco. Termina justo cuando acaba el encogido.
       .to(
         $dateBlur,
         { attr: { stdDeviation: BLUR / 3 }, duration: DATE_SWAP },
@@ -319,14 +344,12 @@ const PHRASES = [
 
     // El plano de fondo abre cerrado y se aleja con la fecha: refuerza el «de
     // grande a pequeño» sin que el encuadre pegue un salto.
-    if ($media) {
-      tl.fromTo(
-        $media,
-        { scale: MEDIA_ZOOM },
-        { scale: 1, duration: DATE_IN, ease: "power1.out" },
-        0,
-      )
-    }
+    tl.fromTo(
+      $media,
+      { scale: MEDIA_ZOOM },
+      { scale: 1, duration: DATE_IN, ease: "power1.out" },
+      0,
+    )
 
     let phraseAt = PHRASE_START
 
