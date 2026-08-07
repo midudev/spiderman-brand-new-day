@@ -5,13 +5,36 @@ import { FICHA, SINOPSIS } from '@/data/content'
 ---
 
 <section id="sinopsis" class="grid min-h-screen scroll-mt-20 grid-cols-[minmax(0,1fr)] items-center bg-neutral-black px-6 pb-32 pt-16 md:scroll-mt-0 md:px-14 md:py-24">
-	<div class="mx-auto grid w-full max-w-6xl gap-12 md:grid-cols-[minmax(0,1fr)_290px] md:gap-24">
-		<div>
-			<h2 data-sinopsis-anim class="font-display text-title-small uppercase text-neutral-white">
-				Spider-Man™: Brand New Day
-			</h2>
+	<!-- Título, cartel y cuerpo son tres celdas hermanas, no dos. En móvil basta
+	     el orden del marcado para que el cartel quede bajo el título; en md el
+	     cartel salta a la segunda columna y abarca las dos filas, de modo que el
+	     texto vuelve a fluir a su lado igual que antes.
+	     El hueco entre filas se anula en md (`gap-y-0`) porque ahí la separación
+	     entre título y cuerpo la sigue poniendo el `mt` del párrafo. -->
+	<div
+		class="mx-auto grid w-full max-w-6xl gap-12 md:grid-cols-[minmax(0,1fr)_290px] md:gap-x-24 md:gap-y-0"
+	>
+		<h2
+			data-sinopsis-anim
+			class="font-display text-title-small uppercase text-neutral-white md:col-start-1 md:row-start-1"
+		>
+			Spider-Man™: Brand New Day
+		</h2>
 
-			<p data-sinopsis-anim class="mt-8 max-w-2xl font-body text-body-medium text-neutral-white/80">
+		<ResponsiveImage
+			base="poster"
+			widths={[290, 580, 870]}
+			sizes="(min-width: 768px) 290px, 100vw"
+			width={1080}
+			height={1350}
+			alt="Cartel de Spider-Man: Brand New Day. Spider-Man salta sobre los rascacielos de Nueva York mientras un grupo de ninjas vestidos de rojo empuña katanas."
+			pictureClass="md:col-start-2 md:row-span-2 md:row-start-1"
+			class="h-auto w-full"
+			data-sinopsis-poster
+		/>
+
+		<div class="md:col-start-1 md:row-start-2">
+			<p data-sinopsis-anim class="max-w-2xl font-body text-body-medium text-neutral-white/80 md:mt-8">
 				{SINOPSIS}
 			</p>
 
@@ -26,17 +49,6 @@ import { FICHA, SINOPSIS } from '@/data/content'
 				}
 			</dl>
 		</div>
-
-		<ResponsiveImage
-			base="poster"
-			widths={[290, 580, 870]}
-			sizes="(min-width: 768px) 290px, 100vw"
-			width={1080}
-			height={1350}
-			alt="Cartel de Spider-Man: Brand New Day. Spider-Man salta sobre los rascacielos de Nueva York mientras un grupo de ninjas vestidos de rojo empuña katanas."
-			class="h-auto w-full"
-			data-sinopsis-poster
-		/>
 	</div>
 
 	<div class="mx-auto mt-10 w-full max-w-6xl md:mt-18">
