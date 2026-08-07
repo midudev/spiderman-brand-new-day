@@ -5,15 +5,40 @@ const RELEASE_DATE = "29.07.26"
 
 /** La fecha se pinta dos veces —hueco de la máscara y texto opaco— y ambas
  *  tienen que caer al píxel: el relevo entre las dos es un fundido cruzado.
- *  La geometría vive aquí una sola vez para que no puedan desalinearse. */
-const DATE_GLYPH = {
-  x: 500,
-  y: 150,
-  "text-anchor": "middle",
-  "dominant-baseline": "central",
-  "font-size": 250,
-  "letter-spacing": -6,
-} as const
+ *  La geometría vive aquí una sola vez para que no puedan desalinearse.
+ *
+ *  El interletrado sale del tamaño (−6 sobre 250 en el diseño original), así que
+ *  las dos disposiciones comparten el mismo ajuste óptico sin repetir números. */
+const linea = (texto: string, x: number, y: number, tamano: number) => ({
+  texto,
+  attrs: {
+    x,
+    y,
+    "text-anchor": "middle",
+    "dominant-baseline": "central",
+    "font-size": tamano,
+    "letter-spacing": Math.round(tamano * -0.024),
+  },
+})
+
+/** Apaisado: la fecha entera en una línea, que es como está diseñada. */
+const DATE_ANCHA = [linea(RELEASE_DATE, 500, 150, 250)]
+
+/** Vertical: el ancho no da para la fecha entera sin dejarla diminuta, así que
+ *  se parte por los puntos y cada bloque gana tamaño. Va centrada en el mismo
+ *  (500,150) que la ancha, de modo que el `svgOrigin` del zoom sirve para las
+ *  dos y el script no tiene que saber cuál está puesta. */
+/** Los dos mandos del tamaño en vertical. Como el `viewBox` es apaisado y se
+ *  ajusta con `meet`, el mapeo lo manda el ancho de la pantalla, no el alto: por
+ *  eso el tamaño se fija contra las 1000 unidades del ancho, que es la
+ *  referencia estable entre teléfonos. El paso va en proporción al bloque
+ *  (1,17×, medido del diseño) para que el aire entre líneas no dependa de lo
+ *  alargado que sea el móvil ni haya que reajustarlo al cambiar el tamaño. */
+const DATE_ALTA_TAMANO = 290
+const DATE_ALTA_PASO = Math.round(DATE_ALTA_TAMANO * 1.17)
+const DATE_ALTA = RELEASE_DATE.split(".").map((bloque, i) =>
+  linea(bloque, 500, 150 + (i - 1) * DATE_ALTA_PASO, DATE_ALTA_TAMANO),
+)
 
 const PHRASES = [
   ["El mundo", "ha olvidado", "a Peter"],
@@ -96,14 +121,23 @@ const PHRASES = [
         >
           <rect x="-2000" y="-2000" width="5000" height="5000" fill="#fff"
           ></rect>
-          <text
-            data-date-text
+          <!-- El negro abre el hueco por el que se ve el vídeo. `fill` y
+               `fill-opacity` van en el grupo: los <text> los heredan, así que el
+               relevo se anima en un solo sitio. -->
+          <g
+            data-date-hole
             class="font-display"
-            {...DATE_GLYPH}
             fill="#000"
             fill-opacity="1"
-            filter="url(#hero-date-soft)">{RELEASE_DATE}</text
+            filter="url(#hero-date-soft)"
           >
+            <g class="date-layout--ancha">
+              {DATE_ANCHA.map((l) => <text {...l.attrs}>{l.texto}</text>)}
+            </g>
+            <g class="date-layout--alta">
+              {DATE_ALTA.map((l) => <text {...l.attrs}>{l.texto}</text>)}
+            </g>
+          </g>
         </mask>
       </defs>
 
@@ -118,13 +152,19 @@ const PHRASES = [
       <!-- La misma fecha, ya opaca. Releva al hueco de la máscara al final del
            encogido: el hueco es una ventana al vídeo y no puede pintarse de un
            color, así que la fecha «normal» tiene que ser un texto aparte encima. -->
-      <text
+      <g
         data-date-fill
         class="font-display text-neutral-white"
-        {...DATE_GLYPH}
         fill="currentColor"
-        opacity="0">{RELEASE_DATE}</text
+        opacity="0"
       >
+        <g class="date-layout--ancha">
+          {DATE_ANCHA.map((l) => <text {...l.attrs}>{l.texto}</text>)}
+        </g>
+        <g class="date-layout--alta">
+          {DATE_ALTA.map((l) => <text {...l.attrs}>{l.texto}</text>)}
+        </g>
+      </g>
     </svg>
 
     <!-- Por encima del velo de la fecha y por debajo de las frases: cuando
@@ -174,6 +214,23 @@ const PHRASES = [
 </section>
 
 <style>
+  /* Sólo una de las dos disposiciones de la fecha se pinta. El criterio es el
+     ancho y no la orientación porque un móvil apaisado sí tiene sitio para la
+     fecha entera. Mismo corte que el resto de la UI fija (`sm`, 640px). */
+  .date-layout--alta {
+    display: none;
+  }
+
+  @media (max-width: 639px) {
+    .date-layout--ancha {
+      display: none;
+    }
+
+    .date-layout--alta {
+      display: inline;
+    }
+  }
+
   .video-fallback {
     background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #0a0a0a 100%);
   }
@@ -222,9 +279,9 @@ const PHRASES = [
 
   const $section = $("[data-hero]") as HTMLElement | null
   const $cover = $("[data-date-cover]") as SVGSVGElement | null
-  const $dateText = $("[data-date-text]") as SVGTextElement | null
+  const $dateHole = $("[data-date-hole]") as SVGGElement | null
   const $dateBlur = $("[data-date-blur]") as SVGFEGaussianBlurElement | null
-  const $dateFill = $("[data-date-fill]") as SVGTextElement | null
+  const $dateFill = $("[data-date-fill]") as SVGGElement | null
   const $heroVideo = $("[data-hero-video]") as HTMLVideoElement | null
   const $media = $("[data-hero-media]") as HTMLElement | null
   const $swing = $("[data-hero-swing]") as HTMLVideoElement | null
@@ -285,7 +342,7 @@ const PHRASES = [
   if (
     $section &&
     $cover &&
-    $dateText &&
+    $dateHole &&
     $dateBlur &&
     $dateFill &&
     $media &&
@@ -307,10 +364,11 @@ const PHRASES = [
       // `power1.out` (cuadrática) y no algo de grado mayor: suaviza la llegada
       // sin aplanarse al final, que es lo que hacía que pareciera detenerse
       // antes de tiempo.
-      // Los dos textos encogen a la vez y con la misma geometría: mientras uno
-      // es hueco y el otro opaco quedan superpuestos al pixel.
+      // Las dos capas encogen a la vez y con la misma geometría: mientras una
+      // es hueco y la otra opaca quedan superpuestas al pixel. El zoom va sobre
+      // los grupos, así que da igual qué disposición esté puesta.
       .fromTo(
-        [$dateText, $dateFill],
+        [$dateHole, $dateFill],
         { scale: DATE_ZOOM, svgOrigin: DATE_ORIGIN },
         {
           scale: 1,
@@ -328,7 +386,7 @@ const PHRASES = [
         DATE_SETTLED - DATE_SWAP,
       )
       .to(
-        $dateText,
+        $dateHole,
         { attr: { "fill-opacity": 0 }, duration: DATE_SWAP },
         DATE_SETTLED - DATE_SWAP,
       )
