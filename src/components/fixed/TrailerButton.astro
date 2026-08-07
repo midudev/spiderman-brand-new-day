@@ -6,261 +6,303 @@
 //     abajo a la derecha.
 //   - Cerrado (resto de la página): sólo la píldora «Ver trailer». Vuelve a
 //     abrirse al hacer hover/focus.
-import { PILL } from "@/consts"
-import PlayVideoButton from "@/components/PlayVideoButton.astro"
+import { PILL } from '@/consts';
+import PlayVideoButton from '@/components/PlayVideoButton.astro';
 ---
 
 <button
-  type="button"
-  data-trailer-cta
-  data-trailer-open
-  class:list={[
-    "p-2 trailer-cta pointer-events-auto font-display uppercase",
-    PILL,
-  ]}
-  aria-label="Ver tráiler oficial"
+	type="button"
+	data-trailer-cta
+	data-trailer-open
+	class:list={[
+		'trailer-cta pointer-events-auto p-2 font-display uppercase',
+		PILL,
+	]}
+	aria-label="Ver tráiler oficial"
 >
-  <picture class="trailer-cta__media">
-    <source type="image/avif" srcset="/images/trailer-cta-376.avif" />
-    <img
-      src="/images/trailer-cta-376.webp"
-      width="376"
-      height="311"
-      alt=""
-      class="h-full w-full object-cover"
-      loading="lazy"
-    />
-  </picture>
+	<picture class="trailer-cta__media">
+		<source type="image/avif" srcset="/images/trailer-cta-376.avif" />
+		<img
+			src="/images/trailer-cta-376.webp"
+			width="376"
+			height="311"
+			alt=""
+			class="h-full w-full object-cover"
+			loading="lazy"
+		/>
+	</picture>
 
-  <span class="trailer-cta__body">
-    <span class="trailer-cta__title">Descubre el <br />trailer oficial</span>
-    <span class="trailer-cta__short" data-label="Ver trailer">Ver trailer</span>
-  </span>
+	<span class="trailer-cta__body">
+		<span class="trailer-cta__title">Descubre el <br />trailer oficial</span>
+		<span class="trailer-cta__short" data-label="Ver trailer">Ver trailer</span>
+	</span>
 
-  <span class="trailer-cta__play">
-    <PlayVideoButton />
-  </span>
+	<span class="trailer-cta__play">
+		<PlayVideoButton />
+	</span>
 </button>
 
 <style>
-  /* Todas las medidas cuelgan de `--h` (la altura de la tarjeta) para que el
-	   diseño escale igual en los dos estados. Proporciones sacadas del diseño:
-	   imagen 1.208·h (su relación nativa), titular 0.155·h. El play es siempre
-	   la píldora fija 42×34 de PlayVideoButton. */
-  .trailer-cta {
-    --h: 180px;
-    --closed-play-space: calc(var(--h) * 0.35);
-    --closed-text-offset: calc(var(--h) * 0.07);
-    position: relative;
-    display: flex;
-    align-items: flex-start;
-    height: var(--h);
-    padding-right: calc(var(--h) * 0.03);
-    border: 0;
-    cursor: pointer;
-    text-align: left;
-    transition:
-      height 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-      padding 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-      background-color 0.2s ease;
-  }
+	/* Las medidas de la tarjeta abierta cuelgan de `--h` (su altura). Proporciones
+	   sacadas del diseño: imagen 1.208·h (su relación nativa), titular 0.155·h.
+	   El play es el óvalo 42×34 de PlayVideoButton: la píldora lo encoge, pero
+	   conserva su relación, así que sigue siendo la misma pieza. */
+	.trailer-cta {
+		--h: 180px;
+		/* Alto del play en la píldora cerrada; el ancho sale de la relación 42:34
+       del óvalo original. Redondearlo a círculo lo convertiría en otra forma. */
+		--closed-play-height: 32px;
+		--closed-play-width: calc(var(--closed-play-height) * 42 / 34);
+		/* Aire entre el play y el borde derecho, y entre el texto y el play. */
+		--closed-play-inset: 8px;
+		--closed-play-gap: 12px;
+		/* El play va en `absolute`, así que no ocupa flujo: el hueco a su izquierda
+       lo reserva el `padding-right` de la píldora. */
+		--closed-play-space: calc(
+			var(--closed-play-width) + var(--closed-play-inset) +
+				var(--closed-play-gap)
+		);
+		position: relative;
+		display: flex;
+		align-items: flex-start;
+		height: var(--h);
+		padding-right: calc(var(--h) * 0.03);
+		border: 0;
+		cursor: pointer;
+		text-align: left;
+		transition:
+			height 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+			padding 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+			background-color 0.2s ease;
+	}
 
-  .trailer-cta__media {
-    display: block;
-    flex-shrink: 0;
-    width: calc(var(--h) * 1.208);
-    height: 100%;
-    overflow: hidden;
-    transition:
-      width 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-      height 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-      opacity 0.3s ease;
-  }
+	.trailer-cta__media {
+		display: block;
+		flex-shrink: 0;
+		width: calc(var(--h) * 1.208);
+		height: 100%;
+		overflow: hidden;
+		transition:
+			width 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+			height 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+			opacity 0.3s ease;
+	}
 
-  .trailer-cta__body {
-    display: flex;
-    align-self: stretch;
-    flex-direction: column;
-    justify-content: flex-start;
-    padding-inline: 1rem;
-    transition: padding 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-  }
+	.trailer-cta__body {
+		display: flex;
+		align-self: stretch;
+		flex-direction: column;
+		justify-content: flex-start;
+		padding-inline: 1rem;
+		transition: padding 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+	}
 
-  .trailer-cta__title,
-  .trailer-cta__short {
-    display: block;
-    overflow: hidden;
-    white-space: nowrap;
-    transition:
-      max-width 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-      height 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-      opacity 0.3s ease;
-  }
+	.trailer-cta__title,
+	.trailer-cta__short {
+		display: block;
+		overflow: hidden;
+		white-space: nowrap;
+		transition:
+			max-width 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+			height 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+			opacity 0.3s ease;
+	}
 
-  /* Altura explícita (dos líneas) en vez de `auto`: así se puede animar a 0 al
+	/* Altura explícita (dos líneas) en vez de `auto`: así se puede animar a 0 al
 	   cerrar y el texto corto queda centrado en la píldora. */
-  .trailer-cta__title {
-    max-width: var(--h);
-    height: calc(var(--h) * 0.32);
-    font-size: calc(var(--h) * 0.12);
-    padding-right: 2rem;
-    line-height: 1.15;
-  }
+	.trailer-cta__title {
+		max-width: var(--h);
+		height: calc(var(--h) * 0.32);
+		font-size: calc(var(--h) * 0.12);
+		padding-right: 2rem;
+		line-height: 1.15;
+	}
 
-  .trailer-cta__short {
-    max-width: 0;
-    align-self: flex-start;
-    overflow: visible;
-    color: transparent;
-    font-size: 20px;
-    line-height: 1;
-    transition: max-width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-  }
+	.trailer-cta__short {
+		max-width: 0;
+		align-self: flex-start;
+		overflow: visible;
+		color: transparent;
+		font-size: 20px;
+		line-height: 1;
+		transition: max-width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+	}
 
-  .trailer-cta__short::after {
-    content: attr(data-label);
-    position: absolute;
-    right: var(--closed-play-space);
-    bottom: var(--closed-text-offset);
-    color: var(--color-neutral-white);
-    opacity: 0;
-    transition: opacity 0.2s ease;
-  }
+	/* Anclado al 50% y descontando media altura propia: centrado real, en vez de
+     colgar de un `bottom` fijo que sólo cuadraba por aproximación. */
+	.trailer-cta__short::after {
+		content: attr(data-label);
+		position: absolute;
+		top: 50%;
+		right: var(--closed-play-space);
+		translate: 0 -50%;
+		color: var(--color-neutral-white);
+		opacity: 0;
+		transition: opacity 0.2s ease;
+	}
 
-  .trailer-cta__play {
-    position: absolute;
-    right: calc(var(--h) * 0.03);
-    bottom: calc(var(--h) * 0.03);
-    transition:
-      right 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-      bottom 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-  }
+	.trailer-cta__play {
+		position: absolute;
+		right: calc(var(--h) * 0.03);
+		bottom: calc(var(--h) * 0.03);
+		transition:
+			right 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+			bottom 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+			translate 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+	}
 
-  /* ------------------------------------------------------------------ *
+	/* El botón se pinta en PlayVideoButton, así que el scope de este componente no
+     le llega: hace falta `:global()`. Acotado a `.trailer-cta__play` para no
+     tocar el mismo botón en Vídeos. */
+	.trailer-cta__play :global(.play-video-button) {
+		transition:
+			width 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+			height 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+	}
+
+	/* ------------------------------------------------------------------ *
 	 * Cerrado: la píldora «Ver trailer» con el play ovalado a la derecha.
 	 * ------------------------------------------------------------------ */
-  .trailer-cta--closed {
-    height: 48px;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding: 0 var(--closed-play-space) 0 10px;
-  }
+	.trailer-cta--closed {
+		height: 48px;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		padding: 0 var(--closed-play-space) 0 12px;
+	}
 
-  .trailer-cta--closed .trailer-cta__media {
-    width: 0;
-    height: 48px;
-    opacity: 0;
-  }
+	.trailer-cta--closed .trailer-cta__media {
+		width: 0;
+		height: 48px;
+		opacity: 0;
+	}
 
-  .trailer-cta--closed .trailer-cta__body {
-    padding: var(--closed-text-offset) 0 0;
-  }
+	/* Sin desplazamiento vertical: lo que centra el texto es el `top: 50%` del
+     `::after`, y este relleno sólo descuadraba la caja. */
+	.trailer-cta--closed .trailer-cta__body {
+		padding: 0;
+	}
 
-  .trailer-cta--closed .trailer-cta__title {
-    max-width: 0;
-    height: 0;
-    opacity: 0;
-    transition-delay: 0s;
-  }
+	/* Mismo óvalo que en la tarjeta, encogido, y centrado en los 48px de alto en
+     lugar de pegado al borde inferior. */
+	.trailer-cta--closed .trailer-cta__play {
+		right: var(--closed-play-inset);
+		bottom: 50%;
+		translate: 0 50%;
+	}
 
-  .trailer-cta--closed .trailer-cta__short {
-    max-width: 160px;
-    align-self: center;
-  }
+	.trailer-cta--closed .trailer-cta__play :global(.play-video-button) {
+		width: var(--closed-play-width);
+		height: var(--closed-play-height);
+	}
 
-  .trailer-cta--closed .trailer-cta__short::after {
-    opacity: 1;
-    transition-delay: 0.2s;
-  }
+	.trailer-cta--closed .trailer-cta__title {
+		max-width: 0;
+		height: 0;
+		opacity: 0;
+		transition-delay: 0s;
+	}
 
-  /* En móvil la píldora convive con las redes en la misma fila y con las medidas
+	.trailer-cta--closed .trailer-cta__short {
+		max-width: 160px;
+		align-self: center;
+	}
+
+	.trailer-cta--closed .trailer-cta__short::after {
+		opacity: 1;
+		transition-delay: 0.2s;
+	}
+
+	/* En móvil la píldora convive con las redes en la misma fila y con las medidas
      de escritorio se salía de pantalla. Misma pieza (fondo, blur, texto y play),
-     sólo más apretada: el hueco del play baja de 63px al mínimo que necesita
-     (42px del botón + su separación), y el texto de 20px a 16px. */
-  @media (max-width: 639px) {
-    .trailer-cta--closed {
-      --closed-play-space: 52px;
-      gap: 6px;
-      padding-left: 8px;
-    }
+     sólo más apretada: play de 32 a 28 de alto, texto de 20 a 16 y un punto
+     menos de aire junto al play. Ancho del play y hueco que reserva se
+     recalculan solos, porque cuelgan de `--closed-play-height` y se resuelven
+     sobre este mismo elemento. */
+	@media (max-width: 639px) {
+		.trailer-cta--closed {
+			--closed-play-height: 28px;
+			--closed-play-gap: 10px;
+			gap: 6px;
+			padding-left: 8px;
+		}
 
-    .trailer-cta--closed .trailer-cta__short {
-      max-width: 120px;
-      font-size: 16px;
-    }
-  }
+		.trailer-cta--closed .trailer-cta__short {
+			max-width: 120px;
+			font-size: 16px;
+		}
+	}
 
-  /* El último del bloque: así anula las transiciones de los dos estados.
+	/* El último del bloque: así anula las transiciones de los dos estados.
      El cambio abierto/cerrado sigue ocurriendo, pero sin recorrido. */
-  @media (prefers-reduced-motion: reduce) {
-    .trailer-cta {
-      transition: background-color 0.2s ease;
-    }
+	@media (prefers-reduced-motion: reduce) {
+		.trailer-cta {
+			transition: background-color 0.2s ease;
+		}
 
-    .trailer-cta__media,
-    .trailer-cta__body,
-    .trailer-cta__title,
-    .trailer-cta__short,
-    .trailer-cta__short::after,
-    .trailer-cta__play {
-      transition: none;
-    }
+		.trailer-cta__media,
+		.trailer-cta__body,
+		.trailer-cta__title,
+		.trailer-cta__short,
+		.trailer-cta__short::after,
+		.trailer-cta__play {
+			transition: none;
+		}
 
-    .trailer-cta--closed .trailer-cta__title,
-    .trailer-cta--closed .trailer-cta__short::after {
-      transition-delay: 0s;
-    }
-  }
+		.trailer-cta--closed .trailer-cta__title,
+		.trailer-cta--closed .trailer-cta__short::after {
+			transition-delay: 0s;
+		}
+	}
 </style>
 
 <script>
-  import { $ } from "@/lib/dom"
+	import { $ } from '@/lib/dom';
 
-  const cta = $("[data-trailer-cta]")
+	const cta = $('[data-trailer-cta]');
 
-  if (cta) {
-    const CLOSED = "trailer-cta--closed"
-    // Sin hover no hay forma de volver a abrirla, así que en táctil/móvil se
-    // queda siempre en píldora.
-    const canHover = window.matchMedia("(hover: hover) and (min-width: 768px)")
+	if (cta) {
+		const CLOSED = 'trailer-cta--closed';
+		// Sin hover no hay forma de volver a abrirla, así que en táctil/móvil se
+		// queda siempre en píldora.
+		const canHover = window.matchMedia('(hover: hover) and (min-width: 768px)');
 
-    // La tarjeta grande sólo vive en el hero: en cuanto se sale, se cierra, y
-    // el hover la vuelve a abrir. Dos banderas y un único sitio que escribe la
-    // clase: si el hover la quitara por su cuenta, el scroll siguiente ya no
-    // sabría en qué estado está.
-    // La primera pantalla del hero, no la sección entera: el hero dura varias
-    // pantallas de scroll y la tarjeta grande sólo vive en la primera.
-    const hero = $("[data-hero-intro]") ?? $("#trailer")
+		// La tarjeta grande sólo vive en el hero: en cuanto se sale, se cierra, y
+		// el hover la vuelve a abrir. Dos banderas y un único sitio que escribe la
+		// clase: si el hover la quitara por su cuenta, el scroll siguiente ya no
+		// sabría en qué estado está.
+		// La primera pantalla del hero, no la sección entera: el hero dura varias
+		// pantallas de scroll y la tarjeta grande sólo vive en la primera.
+		const hero = $('[data-hero-intro]') ?? $('#trailer');
 
-    let scrolled = false
-    let hovered = false
+		let scrolled = false;
+		let hovered = false;
 
-    const render = () =>
-      cta.classList.toggle(CLOSED, !canHover.matches || (scrolled && !hovered))
+		const render = () =>
+			cta.classList.toggle(CLOSED, !canHover.matches || (scrolled && !hovered));
 
-    const onScroll = () => {
-      scrolled = hero
-        ? hero.getBoundingClientRect().bottom <= window.innerHeight * 0.95
-        : window.scrollY > 0
+		const onScroll = () => {
+			scrolled = hero
+				? hero.getBoundingClientRect().bottom <= window.innerHeight * 0.95
+				: window.scrollY > 0;
 
-      render()
-    }
+			render();
+		};
 
-    const setHovered = (value: boolean) => () => {
-      hovered = value
-      render()
-    }
+		const setHovered = (value: boolean) => () => {
+			hovered = value;
+			render();
+		};
 
-    window.addEventListener("scroll", onScroll, { passive: true })
-    window.addEventListener("resize", onScroll)
+		window.addEventListener('scroll', onScroll, { passive: true });
+		window.addEventListener('resize', onScroll);
 
-    cta.addEventListener("pointerenter", setHovered(true))
-    cta.addEventListener("pointerleave", setHovered(false))
-    cta.addEventListener("focus", setHovered(true))
-    cta.addEventListener("blur", setHovered(false))
+		cta.addEventListener('pointerenter', setHovered(true));
+		cta.addEventListener('pointerleave', setHovered(false));
+		cta.addEventListener('focus', setHovered(true));
+		cta.addEventListener('blur', setHovered(false));
 
-    canHover.addEventListener("change", render)
-    onScroll()
-  }
+		canHover.addEventListener('change', render);
+		onScroll();
+	}
 </script>
