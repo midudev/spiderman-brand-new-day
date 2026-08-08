@@ -1,8 +1,22 @@
 ---
 import Close from '@/assets/icons/close.svg';
-import { TRAILER_YOUTUBE } from '@/consts';
+import { TRAILERS_YOUTUBE } from '@/consts';
+import { VIDEOS } from '@/data/content';
 
-const embedSrc = `https://www.youtube-nocookie.com/embed/${TRAILER_YOUTUBE.id}?autoplay=1&start=${TRAILER_YOUTUBE.start}&rel=0&modestbranding=1&playsinline=1`;
+/** Botones genéricos (p. ej. la píldora fija «Ver trailer») no indican vídeo: caen aquí. */
+const DEFAULT_TRAILER = 'trailer-oficial';
+
+const trailers = JSON.stringify(
+	Object.fromEntries(
+		Object.entries(TRAILERS_YOUTUBE).map(([key, trailer]) => [
+			key,
+			{
+				src: `https://www.youtube-nocookie.com/embed/${trailer.id}?autoplay=1&start=${trailer.start}&rel=0&modestbranding=1&playsinline=1`,
+				title: VIDEOS.find((video) => video.id === key)?.title ?? 'Tráiler'
+			}
+		])
+	)
+);
 ---
 
 <!-- El tercer término del `max-w` es el que respeta la altura. El marco es
@@ -15,7 +29,8 @@ const embedSrc = `https://www.youtube-nocookie.com/embed/${TRAILER_YOUTUBE.id}?a
      `dvh` y no `vh` para que cuente la barra del navegador cuando está fuera. -->
 <dialog
 	data-trailer-modal
-	data-embed-src={embedSrc}
+	data-trailers={trailers}
+	data-trailer-default={DEFAULT_TRAILER}
 	class="trailer-modal m-auto w-full max-w-[min(96vw,56rem,calc((100dvh-6px-2rem)*16/9))] border-0 bg-transparent p-0"
 	aria-labelledby="trailer-modal-title"
 >
@@ -74,17 +89,27 @@ const embedSrc = `https://www.youtube-nocookie.com/embed/${TRAILER_YOUTUBE.id}?a
 	const frame = modal
 		? $<HTMLElement>('[data-trailer-modal-frame]', modal)
 		: null;
+	const titleEl = modal
+		? $<HTMLElement>('#trailer-modal-title', modal)
+		: null;
 	const closeBtn = modal
 		? $<HTMLButtonElement>('[data-trailer-modal-close]', modal)
 		: null;
-	const src = modal?.dataset.embedSrc;
 
-	if (modal && frame && src) {
-		const mount = () => {
-			if (frame.querySelector('iframe')) return;
+	type Trailer = { src: string; title: string };
+
+	const trailers = JSON.parse(modal?.dataset.trailers ?? '{}') as Record<
+		string,
+		Trailer
+	>;
+	const defaultKey = modal?.dataset.trailerDefault ?? '';
+
+	if (modal && frame && Object.keys(trailers).length) {
+		const mount = (src: string, title: string) => {
+			frame.replaceChildren();
 			const iframe = document.createElement('iframe');
 			iframe.src = src;
-			iframe.title = 'Tráiler oficial de Spider-Man: Brand New Day';
+			iframe.title = title;
 			iframe.allow =
 				'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
 			iframe.allowFullscreen = true;
@@ -102,8 +127,11 @@ const embedSrc = `https://www.youtube-nocookie.com/embed/${TRAILER_YOUTUBE.id}?a
 			event.preventDefault();
 		};
 
-		const open = () => {
-			mount();
+		const open = (key: string) => {
+			const trailer = trailers[key] ?? trailers[defaultKey];
+			if (!trailer) return;
+			mount(trailer.src, `Tráiler: ${trailer.title}`);
+			if (titleEl) titleEl.textContent = trailer.title;
 			if (!modal.open) modal.showModal();
 			document.addEventListener('wheel', blockBackgroundScroll, {
 				passive: false
@@ -123,7 +151,7 @@ const embedSrc = `https://www.youtube-nocookie.com/embed/${TRAILER_YOUTUBE.id}?a
 			);
 			if (!trigger) return;
 			event.preventDefault();
-			open();
+			open(trigger.getAttribute('data-trailer-open') || defaultKey);
 		});
 
 		closeBtn?.addEventListener('click', close);

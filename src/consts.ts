@@ -3,15 +3,25 @@ import { CAST } from '@/data/content';
 export const SITE_URL = 'https://www.spidermanbrandnewday.es';
 
 /** Compra de entradas (Sony Pictures España). */
-export const TICKETS_URL = 'https://sonypictures.es/pelicula/spiderman-brand-new-day';
+export const TICKETS_URL =
+	'https://sonypictures.es/pelicula/spiderman-brand-new-day';
 
-/** Tráiler oficial en YouTube (embed nocookie). */
-export const TRAILER_YOUTUBE = {
-	id: 'owfWVJoxXR4',
-	start: 25,
-	/** Fecha de publicación en YouTube. La usa el `VideoObject` del JSON-LD. */
-	uploadDate: '2026-03-18'
+/**
+ * Tráilers en YouTube (embed nocookie), uno por vídeo de la sección #videos.
+ * Las claves coinciden con los `id` de `VIDEOS` en `data/content.ts`.
+ */
+export const TRAILERS_YOUTUBE = {
+	'nuevo-trailer': { id: 'o8EccyRIwQQ', start: 0 },
+	'trailer-oficial': {
+		id: 'owfWVJoxXR4',
+		start: 25,
+		/** Fecha de publicación en YouTube. La usa el `VideoObject` del JSON-LD. */
+		uploadDate: '2026-03-18',
+	},
+	'trailer-final': { id: '02c9Lp5EN6c', start: 0 },
 } as const;
+
+export const TRAILER_OFICIAL = TRAILERS_YOUTUBE['trailer-oficial'];
 
 export const SEO = {
 	siteName: 'Spider-Man: Brand New Day',
@@ -28,7 +38,7 @@ export const SEO = {
 	imageHeight: 1088,
 	releaseDateISO: '2026-07-29',
 	director: 'Destin Daniel Cretton',
-	actors: CAST.map((actor) => actor.name)
+	actors: CAST.map((actor) => actor.name),
 } as const;
 
 export interface Section {
@@ -43,7 +53,7 @@ export const SECTIONS: Section[] = [
 	{ id: 'sinopsis', label: 'Sinopsis' },
 	{ id: 'videos', label: 'Videos' },
 	{ id: 'galeria', label: 'Galería' },
-	{ id: 'partners', label: 'Partners' }
+	{ id: 'partners', label: 'Partners' },
 ];
 
 /** Clases compartidas por las píldoras y los botones redondos de la UI fija; se ordena de forma manual, prettier-plugin-tailwindcss no toca constantes de string. */

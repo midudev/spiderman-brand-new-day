@@ -1,21 +1,21 @@
 export const VIDEOS = [
 	{
-		id: 'teaser',
-		title: 'Teaser Tráiler',
+		id: 'nuevo-trailer',
+		title: 'Nuevo Tráiler',
 		base: 'galeria-ninjas-01',
-		alt: 'Placeholder del teaser tráiler de Spider-Man: Brand New Day'
+		alt: 'Fotograma del nuevo tráiler de Spider-Man: Brand New Day'
 	},
 	{
 		id: 'trailer-oficial',
 		title: 'Tráiler Oficial',
 		base: 'galeria-reflection',
-		alt: 'Placeholder del tráiler oficial de Spider-Man: Brand New Day'
+		alt: 'Fotograma del tráiler oficial de Spider-Man: Brand New Day'
 	},
 	{
-		id: 'featurette',
-		title: 'Featurette',
+		id: 'trailer-final',
+		title: 'Tráiler Final',
 		base: 'galeria-ninjas-02',
-		alt: 'Placeholder del featurette de Spider-Man: Brand New Day'
+		alt: 'Fotograma del tráiler final de Spider-Man: Brand New Day'
 	}
 ] as const;
 
