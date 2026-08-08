@@ -214,14 +214,16 @@ const PHRASES = [
 </section>
 
 <style>
-  /* Sólo una de las dos disposiciones de la fecha se pinta. El criterio es el
-     ancho y no la orientación porque un móvil apaisado sí tiene sitio para la
-     fecha entera. Mismo corte que el resto de la UI fija (`sm`, 640px). */
+  /* Sólo una de las dos disposiciones de la fecha se pinta. El corte es por
+     ancho —mismo que el resto de la UI fija (`sm`, 640px)— más una proporción
+     mínima: la disposición apilada necesita un alto de al menos 1,115 veces el
+     ancho, así que por debajo de eso se recortaría por arriba y por abajo. El
+     4/5 deja margen sobre ese 1,115 por si la fuente carga distinta. */
   .date-layout--alta {
     display: none;
   }
 
-  @media (max-width: 639px) {
+  @media (max-width: 639px) and (max-aspect-ratio: 4/5) {
     .date-layout--ancha {
       display: none;
     }
