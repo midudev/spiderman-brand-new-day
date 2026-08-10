@@ -5,13 +5,26 @@ export const SITE_URL = 'https://www.spidermanbrandnewday.es';
 /** Compra de entradas (Sony Pictures España). */
 export const TICKETS_URL = 'https://sonypictures.es/pelicula/spiderman-brand-new-day';
 
-/** Tráiler oficial en YouTube (embed nocookie). */
-export const TRAILER_YOUTUBE = {
-	id: 'owfWVJoxXR4',
-	start: 25,
-	/** Fecha de publicación en YouTube. La usa el `VideoObject` del JSON-LD. */
-	uploadDate: '2026-03-18'
+/**
+ * Tráilers en YouTube (embed nocookie), uno por vídeo de la sección #videos.
+ * Las claves coinciden con los `id` de `VIDEOS` en `data/content.ts`.
+ *
+ * El mapa es heterogéneo a propósito: sólo `trailer-oficial` lleva
+ * `uploadDate`, porque es el único dato que consume el `VideoObject` del
+ * JSON-LD. No se añade al resto de entradas al no tener uso.
+ */
+export const TRAILERS_YOUTUBE = {
+	'nuevo-trailer': { id: 'o8EccyRIwQQ', start: 0 },
+	'trailer-oficial': {
+		id: 'owfWVJoxXR4',
+		start: 25,
+		/** Fecha de publicación en YouTube. La usa el `VideoObject` del JSON-LD. */
+		uploadDate: '2026-03-18'
+	},
+	'trailer-final': { id: '02c9Lp5EN6c', start: 0 }
 } as const;
+
+export const TRAILER_OFICIAL = TRAILERS_YOUTUBE['trailer-oficial'];
 
 export const SEO = {
 	siteName: 'Spider-Man: Brand New Day',

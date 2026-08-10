@@ -43,14 +43,25 @@ import PlayVideoButton from "@/components/PlayVideoButton.astro"
 </button>
 
 <style>
-  /* Todas las medidas cuelgan de `--h` (la altura de la tarjeta) para que el
-	   diseño escale igual en los dos estados. Proporciones sacadas del diseño:
-	   imagen 1.208·h (su relación nativa), titular 0.155·h. El play es siempre
-	   la píldora fija 42×34 de PlayVideoButton. */
+  /* Las medidas de la tarjeta abierta cuelgan de `--h` (su altura). Proporciones
+	   sacadas del diseño: imagen 1.208·h (su relación nativa), titular 0.155·h.
+	   El play es el óvalo 42×34 de PlayVideoButton: la píldora lo encoge, pero
+	   conserva su relación, así que sigue siendo la misma pieza. */
   .trailer-cta {
     --h: 180px;
-    --closed-play-space: calc(var(--h) * 0.35);
-    --closed-text-offset: calc(var(--h) * 0.07);
+    /* Alto del play en la píldora cerrada; el ancho sale de la relación 42:34
+       del óvalo original. Redondearlo a círculo lo convertiría en otra forma. */
+    --closed-play-height: 32px;
+    --closed-play-width: calc(var(--closed-play-height) * 42 / 34);
+    /* Aire entre el play y el borde derecho, y entre el texto y el play. */
+    --closed-play-inset: 8px;
+    --closed-play-gap: 12px;
+    /* El play va en `absolute`, así que no ocupa flujo: el hueco a su izquierda
+       lo reserva el `padding-right` de la píldora. */
+    --closed-play-space: calc(
+      var(--closed-play-width) + var(--closed-play-inset) +
+        var(--closed-play-gap)
+    );
     position: relative;
     display: flex;
     align-items: flex-start;
@@ -117,11 +128,14 @@ import PlayVideoButton from "@/components/PlayVideoButton.astro"
     transition: max-width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
+  /* Anclado al 50% y descontando media altura propia: centrado real, en vez de
+     colgar de un `bottom` fijo que sólo cuadraba por aproximación. */
   .trailer-cta__short::after {
     content: attr(data-label);
     position: absolute;
+    top: 50%;
     right: var(--closed-play-space);
-    bottom: var(--closed-text-offset);
+    translate: 0 -50%;
     color: var(--color-neutral-white);
     opacity: 0;
     transition: opacity 0.2s ease;
@@ -133,7 +147,17 @@ import PlayVideoButton from "@/components/PlayVideoButton.astro"
     bottom: calc(var(--h) * 0.03);
     transition:
       right 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-      bottom 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+      bottom 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+      translate 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /* El botón se pinta en PlayVideoButton, así que el scope de este componente no
+     le llega: hace falta `:global()`. Acotado a `.trailer-cta__play` para no
+     tocar el mismo botón en Vídeos. */
+  .trailer-cta__play :global(.play-video-button) {
+    transition:
+      width 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+      height 0.5s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   /* ------------------------------------------------------------------ *
@@ -143,8 +167,8 @@ import PlayVideoButton from "@/components/PlayVideoButton.astro"
     height: 48px;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    padding: 0 var(--closed-play-space) 0 10px;
+    gap: 8px;
+    padding: 0 var(--closed-play-space) 0 12px;
   }
 
   .trailer-cta--closed .trailer-cta__media {
@@ -153,8 +177,23 @@ import PlayVideoButton from "@/components/PlayVideoButton.astro"
     opacity: 0;
   }
 
+  /* Sin desplazamiento vertical: lo que centra el texto es el `top: 50%` del
+     `::after`, y este relleno sólo descuadraba la caja. */
   .trailer-cta--closed .trailer-cta__body {
-    padding: var(--closed-text-offset) 0 0;
+    padding: 0;
+  }
+
+  /* Mismo óvalo que en la tarjeta, encogido, y centrado en los 48px de alto en
+     lugar de pegado al borde inferior. */
+  .trailer-cta--closed .trailer-cta__play {
+    right: var(--closed-play-inset);
+    bottom: 50%;
+    translate: 0 50%;
+  }
+
+  .trailer-cta--closed .trailer-cta__play :global(.play-video-button) {
+    width: var(--closed-play-width);
+    height: var(--closed-play-height);
   }
 
   .trailer-cta--closed .trailer-cta__title {
@@ -176,11 +215,14 @@ import PlayVideoButton from "@/components/PlayVideoButton.astro"
 
   /* En móvil la píldora convive con las redes en la misma fila y con las medidas
      de escritorio se salía de pantalla. Misma pieza (fondo, blur, texto y play),
-     sólo más apretada: el hueco del play baja de 63px al mínimo que necesita
-     (42px del botón + su separación), y el texto de 20px a 16px. */
+     sólo más apretada: play de 32 a 28 de alto, texto de 20 a 16 y un punto
+     menos de aire junto al play. El hueco que reserva ya no se fija a mano:
+     cuelga de `--closed-play-height` y se resuelve sobre este mismo elemento,
+     así que sale a 52,6px — el mismo sitio donde estaba el 52px de antes. */
   @media (max-width: 639px) {
     .trailer-cta--closed {
-      --closed-play-space: 52px;
+      --closed-play-height: 28px;
+      --closed-play-gap: 10px;
       gap: 6px;
       padding-left: 8px;
     }
@@ -203,7 +245,8 @@ import PlayVideoButton from "@/components/PlayVideoButton.astro"
     .trailer-cta__title,
     .trailer-cta__short,
     .trailer-cta__short::after,
-    .trailer-cta__play {
+    .trailer-cta__play,
+    .trailer-cta__play :global(.play-video-button) {
       transition: none;
     }
 

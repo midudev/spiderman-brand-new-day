@@ -1,5 +1,5 @@
 ---
-import { SITE_URL, SEO, TRAILER_YOUTUBE } from '@/consts'
+import { SITE_URL, SEO, TRAILER_OFICIAL } from '@/consts'
 
 interface Props {
 	title?: string
@@ -23,9 +23,9 @@ const {
 
 const canonical = new URL(url, SITE_URL).href
 const imageUrl = new URL(image, SITE_URL).href
-const trailerWatchUrl = `https://www.youtube.com/watch?v=${TRAILER_YOUTUBE.id}`
-const trailerEmbedUrl = `https://www.youtube-nocookie.com/embed/${TRAILER_YOUTUBE.id}`
-const trailerThumbnailUrl = `https://i.ytimg.com/vi/${TRAILER_YOUTUBE.id}/maxresdefault.jpg`
+const trailerWatchUrl = `https://www.youtube.com/watch?v=${TRAILER_OFICIAL.id}`
+const trailerEmbedUrl = `https://www.youtube-nocookie.com/embed/${TRAILER_OFICIAL.id}`
+const trailerThumbnailUrl = `https://i.ytimg.com/vi/${TRAILER_OFICIAL.id}/maxresdefault.jpg`
 
 const jsonLd = {
 	'@context': 'https://schema.org',
@@ -89,7 +89,7 @@ const jsonLd = {
 				name: `${SEO.movieTitle} — Tráiler Oficial`,
 				description: SEO.description,
 				thumbnailUrl: trailerThumbnailUrl,
-				uploadDate: TRAILER_YOUTUBE.uploadDate,
+				uploadDate: TRAILER_OFICIAL.uploadDate,
 				embedUrl: trailerEmbedUrl,
 				url: trailerWatchUrl
 			}
