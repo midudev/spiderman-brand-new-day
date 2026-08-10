@@ -31,7 +31,7 @@ import { VIDEOS } from '@/data/content';
 								class="size-full object-cover"
 							/>
 
-							<span class="videos__play absolute right-3 bottom-3">
+							<span class="videos__play">
 								<PlayVideoButton
 									label={`Reproducir: ${video.title}`}
 									data-trailer-open={video.id}
@@ -77,6 +77,25 @@ import { VIDEOS } from '@/data/content';
 		box-shadow: 0 18px 40px rgb(0 0 0 / 0.35);
 	}
 
+	.videos__play {
+		position: absolute;
+		right: 0.75rem;
+		bottom: 0.75rem;
+	}
+
+	/* En la cascada la tarjeta siguiente tapa el 40% inferior de la anterior y
+	   además va por encima en `zIndex`, que es justo donde vivía el play: se veía
+	   pero no se podía pulsar. Arriba no lo tapa nadie —el solape sólo crece
+	   hacia abajo— y quedan ~40px de aire hasta el borde de la de después. El
+	   corte replica el de la cascada en el script, movimiento reducido incluido:
+	   ahí las tarjetas se apilan en columna sin solape y el play se queda abajo. */
+	@media (max-width: 767px) and (orientation: portrait) and (prefers-reduced-motion: no-preference) {
+		.videos__play {
+			top: 0.75rem;
+			bottom: auto;
+		}
+	}
+
 	.videos__play :global(.play-video-button) {
 		transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
 	}
@@ -100,8 +119,9 @@ import { VIDEOS } from '@/data/content';
 			padding-inline: 9vw;
 		}
 
+		/* Sigue `relative`: el play va absoluto contra su tarjeta, y con `static`
+		   se anclaba al `.videos__stage` y los tres se amontonaban en su esquina. */
 		.videos__card {
-			position: static;
 			grid-area: auto;
 			width: min(100%, 40rem);
 		}
@@ -120,8 +140,17 @@ import { VIDEOS } from '@/data/content';
 	if (section && surface && cards.length && !prefersReducedMotion()) {
 		const PER_CARD = 0.85;
 
-		/** Mismo corte que el ensanche de `.videos__card` en el CSS. */
-		const isMobile = () => window.matchMedia('(max-width: 767px)').matches;
+		/* El ancho manda para el tamaño de la tarjeta, pero la cascada necesita
+		   además alto: ocupa 2,2 alturas de tarjeta, y como el `grid-area` común
+		   deja el `.pin-surface` de la altura de una sola, tumbado no cabe y el
+		   `overflow: hidden` recorta. En vertical siempre entra: la tarjeta mide
+		   72vw, así que el grupo son ~0,89vw de alto contra un mínimo de 100vh.
+		   Fuera de ahí manda el mazo, que apila con desplazamientos de ~20px.
+		   La consulta se crea una vez y se lee `.matches`, que es vivo: `poseFor`
+		   e `incomingFor` se llaman varias veces por tarjeta y por frame. */
+		const cascadeQuery = window.matchMedia(
+			'(max-width: 767px) and (orientation: portrait)'
+		);
 
 		const stackedPose = (index: number, top: number) => {
 			const depth = top - index;
@@ -187,14 +216,18 @@ import { VIDEOS } from '@/data/content';
 		   transform encima y hacen falta las medidas de maquetación, no las
 		   pintadas. Se leen en cada frame porque el pin sobrevive al resize. */
 		const poseFor = (index: number, top: number) =>
-			isMobile() ? cascadePose(index, top) : stackedPose(index, top);
+			cascadeQuery.matches
+				? cascadePose(index, top)
+				: stackedPose(index, top);
 
-		const incomingFor = () => (isMobile() ? cascadeIncoming() : incomingPose());
+		const incomingFor = () =>
+			cascadeQuery.matches ? cascadeIncoming() : incomingPose();
 
-		/* El tramo de cada tarjeta se recorre con una curva suave en vez de a ritmo
-		   plano, para que aterrice en su sitio. `power1.out` y no algo de grado
-		   mayor: aplana poco al final, así no parece que se detenga antes de que
-		   termine su tramo de scroll. */
+		/* En la cascada el tramo de cada tarjeta se recorre con una curva suave en
+		   vez de a ritmo plano, para que aterrice en su sitio. `power1.out` y no
+		   algo de grado mayor: aplana poco al final, así no parece que se detenga
+		   antes de que termine su tramo de scroll. El mazo sigue con el progreso
+		   crudo: la PR no toca escritorio. */
 		const settle = gsap.parseEase('power1.out');
 
 		const stackDistance = () =>
@@ -212,10 +245,11 @@ import { VIDEOS } from '@/data/content';
 					cards.length - 1,
 					fullyStacked + (frac > 0 ? 1 : 0)
 				);
+				const cascading = cascadeQuery.matches;
 
 				// Mismo valor suavizado para todas: las que ya están y la que entra se
 				// recolocan en bloque, así el grupo no se descuadra a mitad del tramo.
-				const eased = settle(frac);
+				const eased = cascading ? settle(frac) : frac;
 
 				cards.forEach((card, index) => {
 					const play = card.querySelector<HTMLElement>('.videos__play');
@@ -235,7 +269,7 @@ import { VIDEOS } from '@/data/content';
 							// En la cascada todas las tarjetas quedan a la vista, así que
 							// cada una conserva su play; en el mazo sólo lo lleva la de arriba.
 							gsap.set(play, {
-								autoAlpha: isMobile() || index === nextTop ? 1 : 0
+								autoAlpha: cascading || index === nextTop ? 1 : 0
 							});
 						}
 						return;
