@@ -332,6 +332,48 @@ const PHRASES = [
   /** Punto de la timeline en el que arrancan las frases: justo al irse la fecha. */
   const PHRASE_START = DATE_EXIT + DATE_OUT
 
+  /** Baja el vídeo a memoria y lo monta como `blob:` en vez de dejar que el
+      elemento lo pida a la red. Suena a rodeo y es justo lo que lo hace
+      buscable: producción (Cloudflare) contesta `200` con el fichero entero a
+      las peticiones con `Range` y no manda `Accept-Ranges`, y con eso Chrome
+      deja el vídeo en `seekable: [0, 0]` e **ignora en silencio** lo que se le
+      asigne a `currentTime` — sin error y con `readyState` a 4. Como el
+      balanceo es puro scrub, se quedaba clavado en el primer fotograma, que es
+      negro sobre el velo negro: indistinguible de no salir. Sólo fallaba en la
+      primera visita; a la segunda el fichero ya sale de la caché de disco y
+      entonces sí busca, que es por qué no se veía desde dentro del equipo.
+      Desde un blob no depende ni del servidor ni de la caché. Son ~112 KB. */
+  async function loadSeekable(video: HTMLVideoElement) {
+    // La misma elección que haría el navegador entre los <source>: el primero
+    // que case por `media` y sepa decodificarse.
+    const source = [...video.querySelectorAll("source")].find((candidate) => {
+      const media = candidate.getAttribute("media")
+      if (media && !window.matchMedia(media).matches) return false
+      const type = candidate.getAttribute("type")
+      return !type || video.canPlayType(type) !== ""
+    })
+
+    const src = source?.getAttribute("src")
+
+    if (src) {
+      try {
+        const response = await fetch(src)
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+        const blob = await response.blob()
+        // Fuera los <source>, o el `load()` de abajo se vuelve a ir a la red.
+        video.replaceChildren()
+        // No se revoca: la URL tiene que seguir viva mientras el elemento la
+        // use, y el elemento dura lo que la página.
+        video.src = URL.createObjectURL(blob)
+      } catch (error) {
+        // Sin blob se ve mal, pero que lo intente: mejor que quedarse sin nada.
+        console.error("No se pudo precargar el balanceo:", error)
+      }
+    }
+
+    video.load()
+  }
+
   if ($heroVideo && !reducedMotion) {
     onLoadingReady(() => {
       $heroVideo.play().catch((error) => {
@@ -471,7 +513,7 @@ const PHRASES = [
     if ($swing) {
       const swing = { progress: 0 }
 
-      $swing.load()
+      loadSeekable($swing)
 
       tl.fromTo(
         $swing,
