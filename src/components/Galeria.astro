@@ -48,7 +48,10 @@ const galleryJson = JSON.stringify(
 								class="absolute inset-0 z-[1] cursor-zoom-in"
 								aria-label={`Ampliar: ${image.alt}`}
 							>
-								<span class="pointer-events-none absolute right-3 bottom-3 grid size-9 place-items-center rounded-full bg-neutral-white text-neutral-black transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.08] group-focus-within:scale-[1.08] group-focus-within:outline-2 group-focus-within:outline-offset-2 group-focus-within:outline-neutral-white">
+								<span
+									data-galeria-badge
+									class="pointer-events-none absolute right-3 bottom-3 grid size-9 place-items-center rounded-full bg-neutral-white text-neutral-black transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.08] group-focus-within:scale-[1.08] group-focus-within:outline-2 group-focus-within:outline-offset-2 group-focus-within:outline-neutral-white"
+								>
 									<Plus class="size-3.5" aria-hidden="true" />
 								</span>
 							</button>
@@ -160,6 +163,57 @@ const galleryJson = JSON.stringify(
 		}
 	}
 
+	/* En móvil vertical no hay abanico: la pista deja de ser una fila y pasa a ser
+	   una pila, con las tres tarjetas en la misma celda. Quien las separa es el
+	   script, que las coloca en cascada; aquí sólo se prepara el terreno.
+	   72vw y no 78: el corte diagonal se come esquina y media de la tarjeta, así
+	   que a 78 el aire que le queda al grupo contra los bordes se vuelve desigual
+	   según hacia dónde caiga cada una. */
+	@media (max-width: 767px) and (orientation: portrait) and (prefers-reduced-motion: no-preference) {
+		/* El recorte pasa a `.pin-surface`, que ocupa el ancho de la ventana: es lo
+		   que esconde la tarjeta que aún no ha entrado sin cortar la cascada, que
+		   crece hacia arriba y hacia abajo. */
+		.galeria__viewport {
+			overflow: visible;
+		}
+
+		.galeria__stage {
+			display: grid;
+			width: 100%;
+			place-items: center;
+			gap: 0;
+			isolation: isolate;
+		}
+
+		.galeria__card {
+			grid-area: 1 / 1;
+			width: clamp(13rem, 72vw, 40rem);
+		}
+
+		/* En la cascada la tarjeta siguiente tapa la franja inferior de la anterior
+		   y además va por encima en `zIndex`, que es justo donde vivía el «+»: se
+		   veía a medias y no se podía pulsar del todo. Arriba no lo tapa nadie, el
+		   solape sólo crece hacia abajo.
+		   Colgado de `.galeria__card` y no suelto: Astro no le pone su atributo de
+		   scope a un selector que es sólo `[attr]`, y así se quedaba empatado en
+		   especificidad con el `bottom-3` de Tailwind, a expensas del orden de los
+		   ficheros. Con la tarjeta delante el scope sí entra y gana siempre.
+
+		   El 12% es la caída del corte diagonal (el mismo de `CLIP_RIGHT` en el
+		   script): en las tarjetas que caen hacia la derecha ese corte se lleva el
+		   triángulo superior derecho, que es justo donde vive el «+», y arriba del
+		   todo salía cortado. Sumado al aire de 0.75rem deja el botón entero por
+		   debajo de la diagonal. En porcentaje y no en píxeles porque el corte
+		   también es proporcional: así la distancia al borde inclinado sale la
+		   misma —unos 14px— sea cual sea el tamaño de la tarjeta. Las que caen
+		   hacia el otro lado tienen la esquina intacta y no lo necesitarían, pero
+		   se bajan igual para que los tres botones queden a la misma altura. */
+		.galeria__card [data-galeria-badge] {
+			top: calc(12% + 0.75rem);
+			bottom: auto;
+		}
+	}
+
 	@media (prefers-reduced-motion: reduce) {
 		.galeria__viewport {
 			overflow-x: auto;
@@ -194,6 +248,12 @@ const galleryJson = JSON.stringify(
 	import { gsap, prefersReducedMotion } from '@/lib/gsap'
 	import { $, $$, isDocumentScrollKey } from '@/lib/dom'
 	import { createPinnedTiltSection } from '@/lib/tilt'
+	import {
+		arrivalAt,
+		cascadeDistance,
+		cascadeQuery,
+		renderCascade
+	} from '@/lib/cascade'
 
 	type GalleryImage = {
 		base: string
@@ -220,6 +280,9 @@ const galleryJson = JSON.stringify(
 		const endX = () => viewportCenter() - cardCenter(cards[0])
 		const travel = () => Math.max(1, Math.abs(endX() - startX()))
 
+		const badgeOf = (card: HTMLElement) =>
+			card.querySelector<HTMLElement>('[data-galeria-badge]')
+
 		const updateFan = (trackX: number) => {
 			const center = viewportCenter()
 			const step =
@@ -237,6 +300,11 @@ const galleryJson = JSON.stringify(
 						: gsap.utils.interpolate(CLIP_CENTER, CLIP_RIGHT, distance)
 
 				gsap.set(card, {
+					// Deshace la pose de la cascada al cruzar el breakpoint: el abanico
+					// no escribe estas tres y se quedarían pegadas de la otra animación.
+					x: 0,
+					rotate: 0,
+					autoAlpha: 1,
 					rotateY: -position * 28,
 					rotateX: distance * 2,
 					scale: 1 - distance * 0.06,
@@ -250,26 +318,85 @@ const galleryJson = JSON.stringify(
 								: '50% 50%',
 					zIndex: Math.round(10 - distance * 9)
 				})
+
+				const badge = badgeOf(card)
+				if (badge) gsap.set(badge, { autoAlpha: 1 })
 			})
 		}
+
+		/* ——— Cascada (móvil vertical) ———
+		   En móvil la galería no hace abanico: las tarjetas caen una a una y se
+		   quedan todas a la vista, solapadas. El movimiento es exactamente el de la
+		   sección de Vídeos, así que lo pone `lib/cascade`; aquí sólo se le añade
+		   lo que es propio de la galería: el escalonado corto, el corte diagonal de
+		   cada tarjeta y deshacer la pose que dejó el abanico al cruzar el
+		   breakpoint. */
+
+		/* Casi centradas, a diferencia de Vídeos, que escalona con el 0.05 de serie.
+		   Lo pide el Figma y aquí además se sostiene solo: quien marca el quiebro en
+		   la galería es el corte diagonal, que alterna a lo grande, así que el
+		   desplazamiento lateral sobra como refuerzo. */
+		const CASCADE_SHIFT = 0.03
+
+		/* El abanico escribe rotaciones 3D, escala y origen que la cascada no toca;
+		   sin esto se quedarían pegadas al girar el móvil a vertical. */
+		const FAN_RESET = {
+			rotateY: 0,
+			rotateX: 0,
+			transformOrigin: '50% 50%'
+		}
+
+		/* El corte marcado del abanico —el mismo 12%, no el 7% de reposo—, fijo en
+		   cada tarjeta y alternando el sentido: la que cae hacia la derecha va
+		   seguida de una que cae al revés, así los bordes que se tocan abren en uve
+		   en vez de quedar paralelos. Los nombres vienen del abanico, donde marcan
+		   posición; aquí son sólo las dos formas. */
+		const cascadeClip = (index: number) =>
+			index % 2 === 0 ? CLIP_RIGHT : CLIP_LEFT
+
+		const cascadeExtra = (index: number) => ({
+			...FAN_RESET,
+			clipPath: cascadeClip(index)
+		})
 
 		const pin = createPinnedTiltSection({
 			section,
 			surface,
-			mainDistance: travel,
-			onProgress: (slideProgress) => {
-				const x = gsap.utils.interpolate(startX(), endX(), slideProgress)
+			mainDistance: () =>
+				cascadeQuery.matches ? cascadeDistance(cards.length) : travel(),
+			onProgress: (progress) => {
+				if (cascadeQuery.matches) {
+					// La pista es una pila, no una fila: el desplazamiento del abanico
+					// aquí correría el grupo entero.
+					gsap.set(track, { x: 0 })
+					renderCascade({
+						cards,
+						arrival: arrivalAt(progress, cards.length),
+						badge: '[data-galeria-badge]',
+						extra: cascadeExtra,
+						shift: CASCADE_SHIFT
+					})
+					return
+				}
+
+				const x = gsap.utils.interpolate(startX(), endX(), progress)
 				gsap.set(track, { x })
 				updateFan(x)
 			}
 		})
 
+		/* Tabular por las tarjetas mueve el scroll hasta el punto del pin en el que
+		   la enfocada está en su sitio; si no, el foco se iría a una tarjeta que
+		   todavía no ha entrado. En la cascada ese punto es su propio tramo, ya que
+		   llegan en orden; en el abanico hay que deshacer la cuenta del carrusel. */
 		const progressFor = (card: HTMLElement) =>
-			gsap.utils.clamp(
-				0,
-				1,
-				(viewportCenter() - cardCenter(card) - startX()) / (endX() - startX())
-			)
+			cascadeQuery.matches
+				? cards.indexOf(card) / Math.max(1, cards.length - 1)
+				: gsap.utils.clamp(
+						0,
+						1,
+						(viewportCenter() - cardCenter(card) - startX()) / (endX() - startX())
+					)
 
 		viewport.addEventListener('focusin', (event) => {
 			const target = event.target
@@ -277,8 +404,11 @@ const galleryJson = JSON.stringify(
 				return
 			const card = target.closest<HTMLElement>('[data-galeria-item]')
 			if (!card) return
+			const distance = cascadeQuery.matches
+				? cascadeDistance(cards.length)
+				: travel()
 			viewport.scrollLeft = 0
-			window.scrollTo(0, pin.start + progressFor(card) * travel())
+			window.scrollTo(0, pin.start + progressFor(card) * distance)
 		})
 	} else if (section && surface && track && cards.length) {
 		gsap.set(surface, { clearProps: 'clipPath,transform' })

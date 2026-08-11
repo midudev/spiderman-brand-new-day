@@ -132,26 +132,18 @@ import { VIDEOS } from '@/data/content';
 	import { gsap, prefersReducedMotion } from '@/lib/gsap';
 	import { $, $$ } from '@/lib/dom';
 	import { createPinnedTiltSection } from '@/lib/tilt';
+	import {
+		arrivalAt,
+		cascadeDistance,
+		cascadeQuery,
+		renderCascade
+	} from '@/lib/cascade';
 
 	const section = $<HTMLElement>('#videos');
 	const surface = section ? $<HTMLElement>('.pin-surface', section) : null;
 	const cards = section ? $$<HTMLElement>('[data-video-card]', section) : [];
 
 	if (section && surface && cards.length && !prefersReducedMotion()) {
-		const PER_CARD = 0.85;
-
-		/* El ancho manda para el tamaño de la tarjeta, pero la cascada necesita
-		   además alto: ocupa 2,2 alturas de tarjeta, y como el `grid-area` común
-		   deja el `.pin-surface` de la altura de una sola, tumbado no cabe y el
-		   `overflow: hidden` recorta. En vertical siempre entra: la tarjeta mide
-		   72vw, así que el grupo son ~0,89vw de alto contra un mínimo de 100vh.
-		   Fuera de ahí manda el mazo, que apila con desplazamientos de ~20px.
-		   La consulta se crea una vez y se lee `.matches`, que es vivo: `poseFor`
-		   e `incomingFor` se llaman varias veces por tarjeta y por frame. */
-		const cascadeQuery = window.matchMedia(
-			'(max-width: 767px) and (orientation: portrait)'
-		);
-
 		const stackedPose = (index: number, top: number) => {
 			const depth = top - index;
 			if (depth <= 0) {
@@ -175,126 +167,67 @@ import { VIDEOS } from '@/data/content';
 			autoAlpha: 0
 		});
 
-		/* En móvil no se hace mazo: las tarjetas caen en cascada solapada y todas
-		   se quedan a la vista, cada una con su play. Las medidas van en fracciones
-		   de la propia tarjeta, así que no hay que retocarlas si cambia su tamaño. */
-		const CASCADE_STEP = 0.6;
-		const CASCADE_SHIFT = 0.05;
-		const CASCADE_TILT = 2;
-
-		/* El grupo va centrado en los dos ejes contra el punto medio de las que ya
-		   han llegado. En vertical eso es `top / 2`; en horizontal hay que restar
-		   además la media de los signos alternos, que sólo vale cero cuando son
-		   pares: sin esta corrección una sola tarjeta nace desplazada un `SHIFT`
-		   entero y con tres el conjunto se escora. */
-		const shiftMean = (top: number) => {
-			const arrived = top + 1;
-			return arrived % 2 === 0 ? 0 : -1 / arrived;
-		};
-
-		const cascadePose = (index: number, top: number) => {
-			const card = cards[0];
-			const sign = index % 2 === 0 ? -1 : 1;
-			return {
-				x: (sign - shiftMean(top)) * CASCADE_SHIFT * card.offsetWidth,
-				y: (index - top / 2) * CASCADE_STEP * card.offsetHeight,
-				rotate: sign * CASCADE_TILT,
-				scale: 1,
-				autoAlpha: 1
-			};
-		};
-
-		const cascadeIncoming = () => ({
-			x: 0,
-			y: Math.min(420, window.innerHeight * 0.45),
-			rotate: 0,
-			scale: 0.96,
-			autoAlpha: 0
-		});
-
-		/* `offsetWidth/Height` y no `getBoundingClientRect`: las tarjetas ya llevan
-		   transform encima y hacen falta las medidas de maquetación, no las
-		   pintadas. Se leen en cada frame porque el pin sobrevive al resize. */
-		const poseFor = (index: number, top: number) =>
-			cascadeQuery.matches
-				? cascadePose(index, top)
-				: stackedPose(index, top);
-
-		const incomingFor = () =>
-			cascadeQuery.matches ? cascadeIncoming() : incomingPose();
-
-		/* En la cascada el tramo de cada tarjeta se recorre con una curva suave en
-		   vez de a ritmo plano, para que aterrice en su sitio. `power1.out` y no
-		   algo de grado mayor: aplana poco al final, así no parece que se detenga
-		   antes de que termine su tramo de scroll. El mazo sigue con el progreso
-		   crudo: la PR no toca escritorio. */
-		const settle = gsap.parseEase('power1.out');
-
-		const stackDistance = () =>
-			Math.max(1, (cards.length - 1) * window.innerHeight * PER_CARD);
-
+		/* El ancho manda para el tamaño de la tarjeta, pero la cascada necesita
+		   además alto: ocupa 2,2 alturas de tarjeta, y como el `grid-area` común
+		   deja el `.pin-surface` de la altura de una sola, tumbado no cabe y el
+		   `overflow: hidden` recorta. En vertical siempre entra: la tarjeta mide
+		   72vw, así que el grupo son ~0,89vw de alto contra un mínimo de 100vh.
+		   Fuera de ahí manda el mazo, que apila con desplazamientos de ~20px.
+		   Las dos reparten el scroll igual, así que la distancia es la misma. */
 		createPinnedTiltSection({
 			section,
 			surface,
-			mainDistance: stackDistance,
+			mainDistance: () => cascadeDistance(cards.length),
 			onProgress: (stackProgress) => {
-				const arriving = stackProgress * (cards.length - 1);
-				const fullyStacked = Math.floor(arriving);
-				const frac = arriving - fullyStacked;
-				const nextTop = Math.min(
-					cards.length - 1,
-					fullyStacked + (frac > 0 ? 1 : 0)
-				);
-				const cascading = cascadeQuery.matches;
+				const arrival = arrivalAt(stackProgress, cards.length);
 
-				// Mismo valor suavizado para todas: las que ya están y la que entra se
-				// recolocan en bloque, así el grupo no se descuadra a mitad del tramo.
-				const eased = cascading ? settle(frac) : frac;
+				/* En móvil no se hace mazo: las tarjetas caen en cascada solapada y
+				   todas se quedan a la vista, cada una con su play. Es la misma pieza
+				   que usa Galería, de ahí que viva en `lib`. */
+				if (cascadeQuery.matches) {
+					renderCascade({ cards, arrival, badge: '.videos__play' });
+					return;
+				}
+
+				// El mazo va con el progreso crudo, sin la curva de la cascada.
+				const { settled, frac, top } = arrival;
 
 				cards.forEach((card, index) => {
 					const play = card.querySelector<HTMLElement>('.videos__play');
 
-					if (index <= fullyStacked) {
-						const from = poseFor(index, fullyStacked);
-						const to = poseFor(index, nextTop);
+					if (index <= settled) {
+						const from = stackedPose(index, settled);
+						const to = stackedPose(index, top);
 						gsap.set(card, {
-							x: gsap.utils.interpolate(from.x, to.x, eased),
-							y: gsap.utils.interpolate(from.y, to.y, eased),
-							rotate: gsap.utils.interpolate(from.rotate, to.rotate, eased),
-							scale: gsap.utils.interpolate(from.scale, to.scale, eased),
+							x: gsap.utils.interpolate(from.x, to.x, frac),
+							y: gsap.utils.interpolate(from.y, to.y, frac),
+							rotate: gsap.utils.interpolate(from.rotate, to.rotate, frac),
+							scale: gsap.utils.interpolate(from.scale, to.scale, frac),
 							autoAlpha: 1,
 							zIndex: index + 1
 						});
-						if (play) {
-							// En la cascada todas las tarjetas quedan a la vista, así que
-							// cada una conserva su play; en el mazo sólo lo lleva la de arriba.
-							gsap.set(play, {
-								autoAlpha: cascading || index === nextTop ? 1 : 0
-							});
-						}
+						// En el mazo sólo lleva play la de arriba: las de debajo asoman
+						// por el borde y el suyo caería sobre la tarjeta que las tapa.
+						if (play) gsap.set(play, { autoAlpha: index === top ? 1 : 0 });
 						return;
 					}
 
-					if (index === fullyStacked + 1) {
-						const incoming = incomingFor();
-						const stacked = poseFor(index, index);
+					if (index === settled + 1) {
+						const incoming = incomingPose();
+						const stacked = stackedPose(index, index);
 						gsap.set(card, {
-							x: gsap.utils.interpolate(incoming.x, stacked.x, eased),
-							y: gsap.utils.interpolate(incoming.y, stacked.y, eased),
+							x: gsap.utils.interpolate(incoming.x, stacked.x, frac),
+							y: gsap.utils.interpolate(incoming.y, stacked.y, frac),
 							rotate: gsap.utils.interpolate(
 								incoming.rotate,
 								stacked.rotate,
-								eased
+								frac
 							),
-							scale: gsap.utils.interpolate(
-								incoming.scale,
-								stacked.scale,
-								eased
-							),
+							scale: gsap.utils.interpolate(incoming.scale, stacked.scale, frac),
 							autoAlpha: gsap.utils.interpolate(
 								incoming.autoAlpha,
 								stacked.autoAlpha,
-								eased
+								frac
 							),
 							zIndex: index + 1
 						});
@@ -302,7 +235,7 @@ import { VIDEOS } from '@/data/content';
 						return;
 					}
 
-					gsap.set(card, { ...incomingFor(), zIndex: index + 1 });
+					gsap.set(card, { ...incomingPose(), zIndex: index + 1 });
 					if (play) gsap.set(play, { autoAlpha: 0 });
 				});
 			}
