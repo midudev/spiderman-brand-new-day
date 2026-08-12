@@ -167,13 +167,11 @@ import { VIDEOS } from '@/data/content';
 			autoAlpha: 0
 		});
 
-		/* El ancho manda para el tamaño de la tarjeta, pero la cascada necesita
-		   además alto: ocupa 2,2 alturas de tarjeta, y como el `grid-area` común
-		   deja el `.pin-surface` de la altura de una sola, tumbado no cabe y el
-		   `overflow: hidden` recorta. En vertical siempre entra: la tarjeta mide
-		   72vw, así que el grupo son ~0,89vw de alto contra un mínimo de 100vh.
-		   Fuera de ahí manda el mazo, que apila con desplazamientos de ~20px.
-		   Las dos reparten el scroll igual, así que la distancia es la misma. */
+		/* Sin ramificar, a diferencia de Galería: el mazo apila con
+		   desplazamientos de ~20px y la cascada reparte el mismo scroll entre las
+		   mismas tarjetas, así que a las dos les vale la distancia de la cascada.
+		   El porqué de que el modo se decida por vertical vive con la consulta,
+		   en `lib/cascade`. */
 		createPinnedTiltSection({
 			section,
 			surface,

@@ -32,6 +32,13 @@ let query: MediaQueryList | undefined;
 /**
  * En móvil y en vertical se hace cascada.
  *
+ * Vertical y no sólo móvil porque el ancho manda para el tamaño de la tarjeta,
+ * pero la cascada necesita además alto: ocupa 2,2 alturas de tarjeta, y como el
+ * `grid-area` común deja el `.pin-surface` de la altura de una sola, tumbado no
+ * cabe y el `overflow: hidden` recorta. En vertical siempre entra: la tarjeta
+ * mide 72vw, así que el grupo son ~0,89 anchos de pantalla de alto contra un
+ * mínimo de 100vh. Fuera de ahí cada sección se queda con lo suyo.
+ *
  * Perezosa y no una constante de módulo: `window` no existe mientras Astro
  * renderiza, así que en cuanto alguien importase esto desde el frontmatter de
  * un `.astro` —y no desde un `<script>` de cliente, que es lo único que lo pide
@@ -42,6 +49,13 @@ let query: MediaQueryList | undefined;
  * consulta varias veces por frame. `.matches` es vivo, así que sigue al girar
  * el dispositivo sin volver a montar nada; ScrollTrigger recalcula su distancia
  * en el refresh del resize, de modo que el cambio de modo no necesita más aviso.
+ *
+ * La condición está repetida en los `<style>` de Vídeos y de Galería, que
+ * preparan el terreno en CSS (la pista pasa de fila a pila, el distintivo se
+ * sube). Allí llevan además `(prefers-reduced-motion: no-preference)`; aquí no
+ * hace falta porque las dos secciones ya se guardan con `!prefersReducedMotion()`
+ * antes de montar nada. Son tres copias que tienen que moverse juntas: tocar el
+ * breakpoint aquí sin tocarlo allí deja el CSS y el script en modos distintos.
  */
 export const isCascade = () =>
 	(query ??= window.matchMedia(
@@ -91,15 +105,27 @@ const shiftMean = (top: number) => {
 };
 
 /* La tarjeta que aún no ha entrado se oculta con `opacity` y no con
-   `autoAlpha`. `autoAlpha` escribe `visibility: hidden`, y eso saca del orden
-   de tabulación al control que lleva cada tarjeta: tabulando desde arriba te
-   salías de la sección después de la primera, mientras que fuera de la cascada
-   se llegaba a las tres. Es además lo que dejaba sin efecto el rescate que
-   monta cada sección —un `focusin` que lleva el scroll hasta la tarjeta
-   enfocada—, porque una tarjeta que no puede recibir el foco tampoco puede
-   dispararlo: transparente pero enfocable, el rescate ya tiene de qué tirar.
+   `autoAlpha`, que escribe además `visibility: hidden` y saca del orden de
+   tabulación a todo lo que la tarjeta lleve dentro.
 
-   `pointerEvents` cubre el otro lado. Las tarjetas se apilan en la misma celda,
+   Quien lo gana con esto es Galería, y sólo Galería: allí el `<button>` que
+   abre el lightbox es hermano del distintivo, así que ocultar el distintivo no
+   lo toca y las tres imágenes vuelven a ser alcanzables tabulando. Es también
+   lo que dejaba sin efecto su rescate —un `focusin` que lleva el scroll hasta
+   la tarjeta enfocada—, porque una tarjeta que no puede recibir el foco tampoco
+   puede dispararlo. En Vídeos no llega: el botón de play vive dentro del
+   distintivo, que se sigue ocultando con `autoAlpha`, y no hay `focusin` que
+   lo rescate. Se queda como en `main`; enfocar un play invisible y fuera de
+   pantalla sin nada que lo traiga sería peor, así que sacarlo de ahí es otra
+   conversación y arrastra montarle el rescate a Vídeos.
+
+   `visibility: inherit` cierra el paso contrario. La otra animación de cada
+   sección —el mazo, el abanico— sí escribe `autoAlpha`, y el
+   `visibility: hidden` que deja al ocultar una tarjeta no lo pisa nadie si
+   aquí sólo tocamos `opacity`: al girar el móvil a vertical la tarjeta se
+   colocaba en su sitio, con su opacidad, y seguía sin verse.
+
+   `pointerEvents` es la tercera pata. Las tarjetas se apilan en la misma celda,
    así que una transparente por encima se comería los clics de la que sí se ve;
    antes de esto lo impedía el propio `visibility: hidden`. Va sólo en la
    tarjeta: lo de dentro queda cubierto porque `pointer-events` se hereda. */
@@ -173,6 +199,7 @@ export function renderCascade({
 			gsap.set(card, {
 				...own,
 				...incomingPose(),
+				visibility: 'inherit',
 				pointerEvents: 'none',
 				zIndex: index + 1
 			});
@@ -192,6 +219,7 @@ export function renderCascade({
 			rotate: gsap.utils.interpolate(from.rotate, to.rotate, eased),
 			scale: gsap.utils.interpolate(from.scale, to.scale, eased),
 			opacity: gsap.utils.interpolate(from.opacity, to.opacity, eased),
+			visibility: 'inherit',
 			pointerEvents: solid ? 'auto' : 'none',
 			zIndex: index + 1
 		});
