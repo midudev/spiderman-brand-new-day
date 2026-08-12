@@ -34,7 +34,7 @@ const galleryJson = JSON.stringify(
 							<ResponsiveImage
 								base={image.base}
 								widths={[640, 1280]}
-								sizes="(min-width: 768px) 40vw, 78vw"
+								sizes="(min-width: 768px) 40vw, (orientation: portrait) and (prefers-reduced-motion: no-preference) 72vw, 78vw"
 								width={1280}
 								height={683}
 								alt={image.alt}
@@ -194,10 +194,13 @@ const galleryJson = JSON.stringify(
 		   y además va por encima en `zIndex`, que es justo donde vivía el «+»: se
 		   veía a medias y no se podía pulsar del todo. Arriba no lo tapa nadie, el
 		   solape sólo crece hacia abajo.
-		   Colgado de `.galeria__card` y no suelto: Astro no le pone su atributo de
-		   scope a un selector que es sólo `[attr]`, y así se quedaba empatado en
-		   especificidad con el `bottom-3` de Tailwind, a expensas del orden de los
-		   ficheros. Con la tarjeta delante el scope sí entra y gana siempre.
+		   `.galeria__card` delante es por lo que dice —el «+» sólo se mueve dentro
+		   de una tarjeta—, no para ganar especificidad: contra el `bottom-3` de
+		   Tailwind no hay pelea que ganar. Las utilidades se emiten dentro de
+		   `@layer utilities`, y una regla sin capa gana siempre a una con capa sea
+		   cual sea su especificidad y el orden de los ficheros. Suelto también
+		   funcionaría: Astro sí le pone su atributo de scope a un selector que es
+		   sólo `[attr]`.
 
 		   El 12% es la caída del corte diagonal (el mismo de `CLIP_RIGHT` en el
 		   script): en las tarjetas que caen hacia la derecha ese corte se lleva el
@@ -251,7 +254,7 @@ const galleryJson = JSON.stringify(
 	import {
 		arrivalAt,
 		cascadeDistance,
-		cascadeQuery,
+		isCascade,
 		renderCascade
 	} from '@/lib/cascade'
 
@@ -301,10 +304,14 @@ const galleryJson = JSON.stringify(
 
 				gsap.set(card, {
 					// Deshace la pose de la cascada al cruzar el breakpoint: el abanico
-					// no escribe estas tres y se quedarían pegadas de la otra animación.
+					// no escribe estas cuatro y se quedarían pegadas de la otra
+					// animación. `pointerEvents` es la que más se notaría: la cascada lo
+					// pone a `none` en la tarjeta que aún no ha entrado, y sin devolverlo
+					// aquí esa tarjeta seguiría sin aceptar clics ya puesta en el abanico.
 					x: 0,
 					rotate: 0,
 					autoAlpha: 1,
+					pointerEvents: 'auto',
 					rotateY: -position * 28,
 					rotateX: distance * 2,
 					scale: 1 - distance * 0.06,
@@ -363,9 +370,9 @@ const galleryJson = JSON.stringify(
 			section,
 			surface,
 			mainDistance: () =>
-				cascadeQuery.matches ? cascadeDistance(cards.length) : travel(),
+				isCascade() ? cascadeDistance(cards.length) : travel(),
 			onProgress: (progress) => {
-				if (cascadeQuery.matches) {
+				if (isCascade()) {
 					// La pista es una pila, no una fila: el desplazamiento del abanico
 					// aquí correría el grupo entero.
 					gsap.set(track, { x: 0 })
@@ -390,7 +397,7 @@ const galleryJson = JSON.stringify(
 		   todavía no ha entrado. En la cascada ese punto es su propio tramo, ya que
 		   llegan en orden; en el abanico hay que deshacer la cuenta del carrusel. */
 		const progressFor = (card: HTMLElement) =>
-			cascadeQuery.matches
+			isCascade()
 				? cards.indexOf(card) / Math.max(1, cards.length - 1)
 				: gsap.utils.clamp(
 						0,
@@ -404,7 +411,7 @@ const galleryJson = JSON.stringify(
 				return
 			const card = target.closest<HTMLElement>('[data-galeria-item]')
 			if (!card) return
-			const distance = cascadeQuery.matches
+			const distance = isCascade()
 				? cascadeDistance(cards.length)
 				: travel()
 			viewport.scrollLeft = 0

@@ -135,7 +135,7 @@ import { VIDEOS } from '@/data/content';
 	import {
 		arrivalAt,
 		cascadeDistance,
-		cascadeQuery,
+		isCascade,
 		renderCascade
 	} from '@/lib/cascade';
 
@@ -184,7 +184,7 @@ import { VIDEOS } from '@/data/content';
 				/* En móvil no se hace mazo: las tarjetas caen en cascada solapada y
 				   todas se quedan a la vista, cada una con su play. Es la misma pieza
 				   que usa Galería, de ahí que viva en `lib`. */
-				if (cascadeQuery.matches) {
+				if (isCascade()) {
 					renderCascade({ cards, arrival, badge: '.videos__play' });
 					return;
 				}
@@ -204,6 +204,10 @@ import { VIDEOS } from '@/data/content';
 							rotate: gsap.utils.interpolate(from.rotate, to.rotate, frac),
 							scale: gsap.utils.interpolate(from.scale, to.scale, frac),
 							autoAlpha: 1,
+							// La cascada lo pone a `none` mientras la tarjeta no ha entrado.
+							// El mazo tiene que devolverlo o, al girar el móvil a
+							// horizontal, la tarjeta se vería puesta y no aceptaría clics.
+							pointerEvents: 'auto',
 							zIndex: index + 1
 						});
 						// En el mazo sólo lleva play la de arriba: las de debajo asoman
@@ -229,13 +233,18 @@ import { VIDEOS } from '@/data/content';
 								stacked.autoAlpha,
 								frac
 							),
+							pointerEvents: 'auto',
 							zIndex: index + 1
 						});
 						if (play) gsap.set(play, { autoAlpha: frac > 0.55 ? 1 : 0 });
 						return;
 					}
 
-					gsap.set(card, { ...incomingPose(), zIndex: index + 1 });
+					gsap.set(card, {
+						...incomingPose(),
+						pointerEvents: 'none',
+						zIndex: index + 1
+					});
 					if (play) gsap.set(play, { autoAlpha: 0 });
 				});
 			}

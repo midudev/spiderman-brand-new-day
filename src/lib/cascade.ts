@@ -27,15 +27,26 @@ const TILT = 2;
 /** Pantallas de scroll que dura la llegada de cada tarjeta. */
 const PER_CARD = 0.85;
 
+let query: MediaQueryList | undefined;
+
 /**
- * En móvil y en vertical se hace cascada. La consulta se crea una vez y se lee
- * `.matches`, que es vivo: se consulta varias veces por frame y sigue al girar
- * el dispositivo sin volver a montar nada. ScrollTrigger recalcula su distancia
- * en el refresh del resize, así que el cambio de modo no necesita más aviso.
+ * En móvil y en vertical se hace cascada.
+ *
+ * Perezosa y no una constante de módulo: `window` no existe mientras Astro
+ * renderiza, así que en cuanto alguien importase esto desde el frontmatter de
+ * un `.astro` —y no desde un `<script>` de cliente, que es lo único que lo pide
+ * hoy— el build se caería con `window is not defined`. Es el único sitio de
+ * `lib/` que tocaba `window` en el cuerpo del módulo.
+ *
+ * La `MediaQueryList` se guarda en vez de crearla por llamada porque esto se
+ * consulta varias veces por frame. `.matches` es vivo, así que sigue al girar
+ * el dispositivo sin volver a montar nada; ScrollTrigger recalcula su distancia
+ * en el refresh del resize, de modo que el cambio de modo no necesita más aviso.
  */
-export const cascadeQuery = window.matchMedia(
-	'(max-width: 767px) and (orientation: portrait)'
-);
+export const isCascade = () =>
+	(query ??= window.matchMedia(
+		'(max-width: 767px) and (orientation: portrait)'
+	)).matches;
 
 /** Distancia de scroll (px) que ocupa la cascada entera. */
 export const cascadeDistance = (count: number) =>
@@ -79,6 +90,20 @@ const shiftMean = (top: number) => {
 	return arrived % 2 === 0 ? 0 : -1 / arrived;
 };
 
+/* La tarjeta que aún no ha entrado se oculta con `opacity` y no con
+   `autoAlpha`. `autoAlpha` escribe `visibility: hidden`, y eso saca del orden
+   de tabulación al control que lleva cada tarjeta: tabulando desde arriba te
+   salías de la sección después de la primera, mientras que fuera de la cascada
+   se llegaba a las tres. Es además lo que dejaba sin efecto el rescate que
+   monta cada sección —un `focusin` que lleva el scroll hasta la tarjeta
+   enfocada—, porque una tarjeta que no puede recibir el foco tampoco puede
+   dispararlo: transparente pero enfocable, el rescate ya tiene de qué tirar.
+
+   `pointerEvents` cubre el otro lado. Las tarjetas se apilan en la misma celda,
+   así que una transparente por encima se comería los clics de la que sí se ve;
+   antes de esto lo impedía el propio `visibility: hidden`. Va sólo en la
+   tarjeta: lo de dentro queda cubierto porque `pointer-events` se hereda. */
+
 /* `offsetWidth/Height` y no `getBoundingClientRect`: las tarjetas ya llevan
    transform encima y hacen falta las medidas de maquetación, no las pintadas.
    Se leen en cada frame porque el pin sobrevive al resize. */
@@ -95,7 +120,7 @@ const poseAt = (
 		y: (index - top / 2) * STEP * reference.offsetHeight,
 		rotate: sign * TILT,
 		scale: 1,
-		autoAlpha: 1
+		opacity: 1
 	};
 };
 
@@ -105,7 +130,7 @@ const incomingPose = () => ({
 	y: Math.min(420, window.innerHeight * 0.45),
 	rotate: 0,
 	scale: 0.96,
-	autoAlpha: 0
+	opacity: 0
 });
 
 type CascadeRender = {
@@ -140,9 +165,17 @@ export function renderCascade({
 		const mark = card.querySelector<HTMLElement>(badge);
 		const own = extra?.(index);
 		const arrived = index <= settled;
+		/* Ya está puesta, o le queda poco. Manda a la vez sobre el distintivo y
+		   sobre los clics porque las dos cosas van juntas: se pulsa lo que se ve. */
+		const solid = arrived || frac > 0.55;
 
 		if (!arrived && index !== settled + 1) {
-			gsap.set(card, { ...own, ...incomingPose(), zIndex: index + 1 });
+			gsap.set(card, {
+				...own,
+				...incomingPose(),
+				pointerEvents: 'none',
+				zIndex: index + 1
+			});
 			if (mark) gsap.set(mark, { autoAlpha: 0 });
 			return;
 		}
@@ -158,11 +191,12 @@ export function renderCascade({
 			y: gsap.utils.interpolate(from.y, to.y, eased),
 			rotate: gsap.utils.interpolate(from.rotate, to.rotate, eased),
 			scale: gsap.utils.interpolate(from.scale, to.scale, eased),
-			autoAlpha: gsap.utils.interpolate(from.autoAlpha, to.autoAlpha, eased),
+			opacity: gsap.utils.interpolate(from.opacity, to.opacity, eased),
+			pointerEvents: solid ? 'auto' : 'none',
 			zIndex: index + 1
 		});
 
 		// Todas las tarjetas quedan a la vista, así que cada una conserva el suyo.
-		if (mark) gsap.set(mark, { autoAlpha: arrived || frac > 0.55 ? 1 : 0 });
+		if (mark) gsap.set(mark, { autoAlpha: solid ? 1 : 0 });
 	});
 }
